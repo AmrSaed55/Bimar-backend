@@ -1,8 +1,6 @@
 const express = require("express");
 const app = express();
-// const { MongoClient, ServerApiVersion } = require('mongodb');
-const PORT = process.env.PORT || 3000;
-const uri = "mongodb+srv://Bimar:Bimar123@bimarcluster.2kvr9.mongodb.net/";
+
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 dotenv.config()
@@ -27,7 +25,7 @@ mongoose.connect(process.env.DB).then(()=>{
 })
 
 app.listen(process.env.port, () => {
-  console.log(`Listening on port ${PORT}`);
+  console.log(`Listening on port ${process.env.port}`);
 });
 
 
