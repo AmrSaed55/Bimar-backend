@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+// const { MongoClient, ServerApiVersion } = require('mongodb');
 const PORT = process.env.PORT || 3000;
 const uri = "mongodb+srv://Bimar:Bimar123@bimarcluster.2kvr9.mongodb.net/";
 const mongoose = require('mongoose')
