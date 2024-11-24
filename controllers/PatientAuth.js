@@ -20,7 +20,8 @@ const register = async (req,res) =>{
         let addPatient = await Patient.create({...newPatientData,userPassword : hashedPassword})
         res.status(201).json({
             'status' : responseMsgs.SUCCESS,
-             data : addPatient
+             data : 'SignUp Successfully',
+             patient : addPatient
         })
     }
     catch(er){
@@ -46,7 +47,9 @@ const login = async(req,res) =>{
         let token = jwt.sign({},process.env.jwtKey)
         res.status(200).cookie('jwt',token).json({
             'status' : responseMsgs.SUCCESS,
-            data : 'Loged In Successfully'
+            data : 'Loged In Successfully',
+            patient : getPatient
+
         })
 
     }
