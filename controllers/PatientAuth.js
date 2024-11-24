@@ -21,7 +21,6 @@ const register = async (req,res) =>{
         res.status(201).json({
             'status' : responseMsgs.SUCCESS,
              data : 'SignUp Successfully',
-             patient : addPatient
         })
     }
     catch(er){
@@ -44,12 +43,20 @@ const login = async(req,res) =>{
             throw('Wrong Password')
         }
 
+        const patientData = {
+            userEmail : getPatient.userEmail , 
+            userName : getPatient.userName , 
+            userWeight : getPatient.userWeight , 
+            userHeight : getPatient.userHeight ,
+            userPhone : getPatient.userPhone, 
+            DateofBirth : getPatient.DateofBirth,
+            Gender : getPatient.Gender}
+
         let token = jwt.sign({},process.env.jwtKey)
         res.status(200).cookie('jwt',token).json({
             'status' : responseMsgs.SUCCESS,
             data : 'Loged In Successfully',
-            patient : getPatient
-
+            patient : patientData
         })
 
     }
