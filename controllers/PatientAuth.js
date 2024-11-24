@@ -20,7 +20,7 @@ const register = async (req,res) =>{
         let addPatient = await Patient.create({...newPatientData,userPassword : hashedPassword})
         res.status(201).json({
             'status' : responseMsgs.SUCCESS,
-            data : addPatient
+             data : addPatient
         })
     }
     catch(er){
@@ -112,7 +112,8 @@ const forgetpassword = async(req,res)=>{
 
         res.status(200).cookie('jwt',token).json({ 
             status: responseMsgs.SUCCESS, 
-            message: 'OTP sent to your email' });
+            data: 'OTP sent to your email',
+         });
     }
 
     catch (err) {
@@ -133,14 +134,14 @@ const verifyotp = async(req,res)=>{
         if(storedOtp !== otp){
             return res.status(400).json({
                 status: responseMsgs.FAILURE,
-                message: 'Incorrect OTP. Please try again.'
+                data: 'Incorrect OTP. Please try again.'
             })
         }
             
 
         res.status(200).json({
             status: responseMsgs.SUCCESS,
-            message: 'OTP verified successfully. Now you can reset your password',
+            data: 'OTP verified successfully. Now you can reset your password',
         })
     } catch(err){
         console.log(err)
