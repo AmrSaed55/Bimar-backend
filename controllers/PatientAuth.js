@@ -25,7 +25,7 @@ const register = async (req,res) =>{
     }
     catch(er){
         console.log(er)
-        errorHandler(res.er)
+        errorHandler(res, er)
     }
 }
 
