@@ -128,7 +128,7 @@ const forgetpassword = async(req,res)=>{
 
     catch (err) {
         console.log(err);
-        errorHandler(err)
+        errorHandler(res, err);
     }
 }
 
@@ -155,7 +155,7 @@ const verifyotp = async(req,res)=>{
         })
     } catch(err){
         console.log(err)
-        errorHandler(err)
+        errorHandler(res, err)
     }
 }
 
@@ -188,7 +188,7 @@ const resetPassword = async (req,res) =>{
         res.status(200).json(update ? data = "Password updated" : data = 'password updated failed')
     } catch (err) {
         console.log(err);
-        errorHandler(err)
+        errorHandler(res, err)
     }
 }
 
