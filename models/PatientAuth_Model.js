@@ -10,7 +10,6 @@ const PatientSchema = mongoose.Schema({
     chronicMedications: [String],
     surgeries: [String],
     chronicDiseases: [String],
-    immunizations: [String],
     vaccinations: [String],
     bloodType: {
       type: String,
