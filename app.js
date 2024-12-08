@@ -16,6 +16,7 @@ const doctorAuth = require("./Routes/doctorAuth");
 const patientAuth = require("./Routes/PatientAuth");
 const appointments = require("./Routes/appointment");
 const patientsAuth = require("./Routes/PatientAuth");
+const medicalRecordRoutes = require('./Routes/medicalRecordRoutes');
 // const chatBot = require('./Routes/chatBot');
 // const rating = require('./Routes/rate');
 
@@ -32,3 +33,4 @@ app.listen(process.env.port, () => {
 app.use(express.json())
 app.use(cookieParse())
 app.use('/patientsAuth',patientAuth)
+app.use('/medical-records',medicalRecordRoutes)

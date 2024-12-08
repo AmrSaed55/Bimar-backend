@@ -58,6 +58,7 @@ const PatientSchema = mongoose.Schema({
       },
     },
   },
+
   personalRecords: {
     City: String,
     Area: String,
