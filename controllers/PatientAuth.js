@@ -99,7 +99,6 @@ const forgetpassword = async (req, res) => {
       from: "bimar.med24@gmail.com",
       to: userEmail,
       subject: "Password Reset OTP",
-      //   html: `<p>Your OTP is: <strong>${otp}</strong></p><p>It will expire in 10 minutes.</p>`,
       html: `
       <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
             <!-- Email Container -->
