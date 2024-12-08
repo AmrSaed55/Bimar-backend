@@ -55,7 +55,9 @@ const login = async (req, res) => {
       Gender: getPatient.Gender,
     };
 
-    let token = jwt.sign({}, process.env.jwtKey);
+    let token = jwt.sign({
+        email : credetials.userEmail
+    }, process.env.jwtKey);
     res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
       data: "Loged In Successfully",
