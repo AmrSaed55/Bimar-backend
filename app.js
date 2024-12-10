@@ -20,12 +20,14 @@ const medicalRecordRoutes = require('./Routes/medicalRecordRoutes');
 // const chatBot = require('./Routes/chatBot');
 // const rating = require('./Routes/rate');
 
+//load environment variables for debugging 
+console.log(process.env);
 
 mongoose.connect(process.env.DB).then(()=>{
   console.log('DB Connected')
 })
 
-app.listen(process.env.port, () => {
+app.listen(process.env.port||3000, () => {
   console.log(`Listening on port ${process.env.port}`);
 });
 
