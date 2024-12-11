@@ -17,6 +17,7 @@ const patientAuth = require("./Routes/PatientAuth");
 const appointments = require("./Routes/appointment");
 const patientsAuth = require("./Routes/PatientAuth");
 const medicalRecordRoutes = require('./Routes/medicalRecordRoutes');
+const doctorRoutes = require('./Routes/doctorRoute');
 // const chatBot = require('./Routes/chatBot');
 // const rating = require('./Routes/rate');
 
@@ -36,3 +37,4 @@ app.use(express.json())
 app.use(cookieParse())
 app.use('/patientsAuth',patientAuth)
 app.use('/medical-records',medicalRecordRoutes)
+app.use('/doctor',doctorRoutes)
