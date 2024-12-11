@@ -1,4 +1,5 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
+const { v4: uuidv4 } = require('uuid')
 
 const PatientSchema = mongoose.Schema({
   userName: String,
@@ -21,17 +22,18 @@ const PatientSchema = mongoose.Schema({
     },
   },
 
-  Diagnosis: {
+  Diagnosis: [{
     date: { type: Date, default: Date.now },
     doctorName: String,
     doctorPhone: String,
-    diagnosis: String,
+    diagnosis: [String],
     treatmentPlan: String,
+    Xray: [String],
+    labResults: [String],
 
     prescription: {
+      prescriptionId: { type: String, default: uuidv4 },
       prescriptionDate: Date,
-      Xray: String,
-      labResults: String,
       prescriptionInstruction: [
         {
           medication: String,
@@ -47,7 +49,8 @@ const PatientSchema = mongoose.Schema({
         default: "Pending",
       },
     },
-    consultations: {
+    consultations: [{
+      consultationId: { type: String, default: uuidv4 },
       consultationDate: Date,
       consultationDescription: String,
       consultationStatus: {
@@ -55,8 +58,8 @@ const PatientSchema = mongoose.Schema({
         enum: ["Pending", "Scheduled", "Completed"],
         default: "Pending",
       },
-    },
-  },
+    }],
+  }],
 
   personalRecords: {
     City: String,
