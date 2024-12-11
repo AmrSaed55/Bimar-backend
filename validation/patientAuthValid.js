@@ -2,6 +2,12 @@ const {body} = require('express-validator')
 const User = require('./../models/PatientAuth_Model')
 
 
+// Phone number validation function
+// const phoneValidator = (value) => {
+//   const regex = /^01[0-2,5]\d{1,8}$/;
+//   return regex.test(value);
+// };
+
 const userValidation = ()=>{
     return[
         body('userName').notEmpty().withMessage('Name cant be Empty'),
@@ -34,27 +40,18 @@ const userValidation = ()=>{
 };
 const medicalRecordValidation = () => {
     return [
-        body('allgeric').isArray().withMessage('Allergic field must be an array'),
-        body('chronicMedications').isArray().withMessage('Chronic Medications field must be an array'),
-        body('surgeries').isArray().withMessage('Surgeries field must be an array'),
-        body('chronicDiseases').isArray().withMessage('Chronic Diseases field must be an array'),
-        body('immunizations').isArray().withMessage('Immunizations field must be an array'),
-        body('vaccinations').isArray().withMessage('Vaccinations field must be an array'),
+        body('allgeric').notEmpty().withMessage('Allergic field cannot be empty'),
+        body('chronicMedications').notEmpty().withMessage('Chronic Medications field cannot be empty'),
+        body('surgeries').notEmpty().withMessage('Surgeries field cannot be empty'),
+        body('chronicDiseases').notEmpty().withMessage('Chronic Diseases field cannot be empty'),
+        body('immunizations').notEmpty().withMessage('Immunizations field cannot be empty'),
+        body('vaccinations').notEmpty().withMessage('Vaccinations field cannot be empty'),
         body('bloodType')
             .notEmpty().withMessage('Blood Type cannot be empty')
             .isIn(["AB+", "A+", "B+", "O+", "AB-", "A-", "B-", "O-"])
             .withMessage('Invalid blood type'),
         body('familyHistory.genatics').isArray().withMessage('Family history genetics must be an array'),
         body('familyHistory.genaticsDiseases').isArray().withMessage('Family history genetic diseases must be an array'),
-        body('doctorName').notEmpty().withMessage('Doctor Name Can\'t Be Empty'),
-        body('doctorPhone').notEmpty().withMessage('Doctor Phone Can\'t Be Empty').isMobilePhone().withMessage('Mobile Formate Wrong'),
-        body('diagnosis').notEmpty().withMessage('Diagnosis Can\'t Be Empty'),
-        body('treatmentPlan').notEmpty().withMessage('TreatmentPlan Can\'t Be Empty'),
-        body('prescriptionInstruction.medication').notEmpty().withMessage('Medication Can\'t Be Empty'),
-        body('prescriptionInstruction.dosage').notEmpty().withMessage('Dosage Can\'t Be Empty'),
-        body('prescriptionInstruction.frequency').notEmpty().withMessage('Frequency Can\'t Be Empty'),
-        body('prescriptionInstruction.duration').notEmpty().withMessage('Duration Can\'t Be Empty'),
-        body('consultations.consultationDate').notEmpty().withMessage('Consultation Date Can\'t Be Empty'),
         
     ];
 };
@@ -74,4 +71,5 @@ const DiagnosisValidation = () => {
     ];
 };
 
-module.exports = {userValidation,medicalRecordValidation};
+
+module.exports = {userValidation,medicalRecordValidation,DiagnosisValidation};

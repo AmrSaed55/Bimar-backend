@@ -8,7 +8,7 @@ router.route('/')
 .post(upload.fields([
     { name: 'Xray', maxCount: 5 },
     { name: 'labResults', maxCount: 5 },
-  ]),Diagnosisvalidator(),diagnosisController.creatDiagnosis)
+  ]),Diagnosisvalidator.DiagnosisValidation(),diagnosisController.creatDiagnosis)
 .get(diagnosisController.getDiagnosis)
 .patch(diagnosisController.updateDiagnosis)
 
