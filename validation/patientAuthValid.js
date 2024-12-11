@@ -16,7 +16,7 @@ const userValidation = ()=>{
         }),
 
         body('userPhone').notEmpty().withMessage('Phone cant be Empty')
-        .isMobilePhone().withMessage('Phone Formate invalide')
+        .isMobilePhone().withMessage('Phone Formate invalid')
         .custom(async(data)=>{
             let checkUser = await User.findOne({userPhone : data})
             if(checkUser){
@@ -49,5 +49,4 @@ const medicalRecordValidation = () => {
     ];
 };
 
-module.exports = userValidation;
-module.exports = medicalRecordValidation;
+module.exports = {userValidation,medicalRecordValidation};

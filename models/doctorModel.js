@@ -57,7 +57,7 @@ const DoctorSchema = mongoose.Schema({
       "Oral and Maxillofacial Surgery", // جراحة الفم والوجه والفكين
     ],
     yearsOfExprience: String,
-    syndicateCard: String,
+    syndicateCard: String, //كارنيه النقابة
     certificates: String,
   },
   clinc: [
@@ -70,7 +70,7 @@ const DoctorSchema = mongoose.Schema({
       clincWebsite: String,
       clincOpeningHours: [String],
       clincWorkDays: [String],
-      clincLocationLinks: [String],
+      clincLocationLinks: String,
     },
   ],
 });
