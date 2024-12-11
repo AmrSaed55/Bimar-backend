@@ -12,12 +12,10 @@ const Cors = require('cors')
 const patientAuth = require("./Routes/PatientAuth");
 const medicalRecordRoutes = require('./Routes/medicalRecordRoutes');
 const doctorRoutes = require('./Routes/doctorRoute');
-
+const diagnosisRoute = require('./Routes/diagnosisRoute');
+const patientRecordRoute = require('./Routes/personalRecordRoute');
 
 const errorMW = require('./middlewares/errorMw');
-const diagnosisRoute = require('./Routes/diagnosisRoute');
-// const chatBot = require('./Routes/chatBot');
-// const rating = require('./Routes/rate');
 
 //load environment variables for debugging 
 console.log(process.env);
@@ -48,3 +46,4 @@ app.use('/patientsAuth',patientAuth)
 app.use('/medical-records',medicalRecordRoutes)
 app.use('/Diagnosis',diagnosisRoute)
 app.use('/doctor',doctorRoutes)
+app.use('/patientRecords',patientRecordRoute);
