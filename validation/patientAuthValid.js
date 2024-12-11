@@ -8,12 +8,30 @@ const User = require('./../models/PatientAuth_Model')
 //   return regex.test(value);
 // };
 
+//till they answer there one more validation for the wifes number and number of children 
 const userValidation = ()=>{
     return[
         body('userName').notEmpty().withMessage('Name cant be Empty'),
-        body('userPassword').notEmpty().withMessage('Password cant be Empty'),
+        body('userPassword')
+            .notEmpty().withMessage('Password cant be Empty')
+            .isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+            .custom(value => {
+                if (!/[A-Z]/.test(value)) {
+                    throw new Error('Password must contain at least one uppercase letter')
+                }
+                if (!/[a-z]/.test(value)) {
+                    throw new Error('Password must contain at least one lowercase letter')
+                }
+                if (!/\d/.test(value)) {
+                    throw new Error('Password must contain at least one number')
+                }
+                if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
+                    throw new Error('Password must contain at least one special character')
+                }
+                return true;
+            }),
         body('userEmail').notEmpty().withMessage('Email cant be Empty')
-        .isEmail().withMessage('Email Formate is invalide')
+        .isEmail().withMessage('Email Formate is invalid')
         .custom(async(data)=>{
             let checkUser = await User.findOne({userEmail : data})
             if(checkUser){
@@ -22,20 +40,58 @@ const userValidation = ()=>{
         }),
 
         body('userPhone').notEmpty().withMessage('Phone cant be Empty')
-        .isMobilePhone().withMessage('Phone Formate invalid')
+        .isMobilePhone().withMessage('Phone Format invalid')
         .custom(async(data)=>{
             let checkUser = await User.findOne({userPhone : data})
             if(checkUser){
                 throw('Phone Already Exists')
             }
         }),
-        body('City').notEmpty().withMessage('City cant be Empty'),
-        body('Gender').notEmpty().withMessage('Gender cant be Empty'),
-        body('Area').notEmpty().withMessage('Area cant be Empty'),
-        body('userWeight').notEmpty().withMessage('Weight cant be Empty'),
-        body('userHeight').notEmpty().withMessage('Height cant be Empty'),
-        body('DateofBirth').notEmpty().withMessage('DateofBirth cant be Empty'),
-        body('BooldType').notEmpty().withMessage('BooldType cant be Empty')
+        body('personalRecords.City').notEmpty().withMessage('City cant be Empty'),
+        body('personalRecords.Area').notEmpty().withMessage('Area cant be Empty'),
+        body('personalRecords.Gender').notEmpty().withMessage('Gender cant be Empty')
+            .isIn(['Male','Female']).withMessage("invalid gender we don't support LGPTQ choose between Male or Female"),
+        body('personalRecords.userWeight').notEmpty().withMessage('Weight cant be Empty'),
+        body('personalRecords.userHeight').notEmpty().withMessage('Height cant be Empty'),
+        body('personalRecords.DateOfBirth').notEmpty().withMessage('DateOfBirth cant be Empty'),
+        body('personalRecords.emergencyContact').notEmpty().withMessage('emergencyContact cant be Empty')
+            .isMobilePhone('any').withMessage('emergencyContact Format invalid')
+            .custom((value, { req }) => {
+                if (value === req.body.userPhone) {
+                    throw new Error('emergencyContact cannot be the same as userPhone');
+                }
+                return true;
+            }),
+        body('personalRecords.workName').notEmpty().withMessage('workName cant be Empty'),
+        body('personalRecords.workPlace').notEmpty().withMessage('worPlace cant be Empty'),
+        body('personalRecords.childrenNumber').notEmpty().withMessage('childrenNumber cant be Empty'),
+        body('personalRecords.birthDateOfFirstChild').custom((value, { req }) => {
+            if (req.body.personalRecords.childrenNumber == '0' && value) {
+                throw new Error('birthDateOfFirstChild cannot exist if there are no children');
+            }
+            return true;
+        }),
+        body('personalRecords.smoking').notEmpty().withMessage('smoking cant be Empty')
+            .isIn(["Yes","No","Former smoker"]).withMessage('invalid smoking answer it should be Yes or No or Former smoker'),
+        body('personalRecords.alcohol').notEmpty().withMessage('alcohol cant be Empty'),
+        body('personalRecords.wifesNumber').custom((value, { req }) => {
+            if (req.body.personalRecords.Gender === 'Female') {
+                if (value) {
+                    throw('wifesNumber should not exist if Gender is female');
+                }
+            } else {
+                if (value === undefined || value === null) {
+                    throw('wifesNumber cant be Empty');
+                }
+                if (['Married', 'Divorced', 'Widowed'].includes(req.body.personalRecords.familyStatus) && value === 0) {
+                    throw('wifesNumber cannot be zero if family status is Married, Divorced, or Widowed');
+                }
+            }
+            return true;
+        }),
+        body('personalRecords.petsTypes').isArray().withMessage('petsTypes cant be Empty'),
+        body('personalRecords.familyStatus').notEmpty().withMessage('familyStatus cant be Empty')
+            .isIn(["Single", "Married", "Divorced", "Widowed"]).withMessage('it should be one of Single or Married or Divorced or Widowed'),
     ]
 };
 const medicalRecordValidation = () => {

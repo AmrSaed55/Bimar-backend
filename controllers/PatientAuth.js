@@ -48,11 +48,7 @@ const login = async (req, res) => {
     const patientData = {
       userEmail: getPatient.userEmail,
       userName: getPatient.userName,
-      userWeight: getPatient.userWeight,
-      userHeight: getPatient.userHeight,
       userPhone: getPatient.userPhone,
-      DateofBirth: getPatient.DateofBirth,
-      Gender: getPatient.Gender,
     };
 
     let token = jwt.sign({

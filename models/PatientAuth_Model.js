@@ -72,7 +72,10 @@ const PatientSchema = mongoose.Schema({
     workPlace: String,
     childrenNumber: Number,
     birthDateOfFirstChild: String,
-    smoking: String,
+    smoking: {
+      type:String,
+      enum:["Yes","No","Former smoker"],
+    },
     alcohol: String,
     wifesNumber: Number,
     petsTypes: [String],
