@@ -46,7 +46,8 @@ const updatePersonalRecords = async(req,res)=>{
         }
 
         patient.personalRecords = {...patient.personalRecords, ...PersonalRecordsData};
-
+        await patient.save();
+        
         res.status(200).json({
             status: responseMsgs.SUCCESS,
             data: patient.personalRecords,
