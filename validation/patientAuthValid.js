@@ -46,6 +46,31 @@ const medicalRecordValidation = () => {
             .withMessage('Invalid blood type'),
         body('familyHistory.genatics').isArray().withMessage('Family history genetics must be an array'),
         body('familyHistory.genaticsDiseases').isArray().withMessage('Family history genetic diseases must be an array'),
+        body('doctorName').notEmpty().withMessage('Doctor Name Can\'t Be Empty'),
+        body('doctorPhone').notEmpty().withMessage('Doctor Phone Can\'t Be Empty').isMobilePhone().withMessage('Mobile Formate Wrong'),
+        body('diagnosis').notEmpty().withMessage('Diagnosis Can\'t Be Empty'),
+        body('treatmentPlan').notEmpty().withMessage('TreatmentPlan Can\'t Be Empty'),
+        body('prescriptionInstruction.medication').notEmpty().withMessage('Medication Can\'t Be Empty'),
+        body('prescriptionInstruction.dosage').notEmpty().withMessage('Dosage Can\'t Be Empty'),
+        body('prescriptionInstruction.frequency').notEmpty().withMessage('Frequency Can\'t Be Empty'),
+        body('prescriptionInstruction.duration').notEmpty().withMessage('Duration Can\'t Be Empty'),
+        body('consultations.consultationDate').notEmpty().withMessage('Consultation Date Can\'t Be Empty'),
+        
+    ];
+};
+
+const DiagnosisValidation = () => {
+    return [
+        body('doctorName').notEmpty().withMessage('Doctor Name Can\'t Be Empty'),
+        body('doctorPhone').notEmpty().withMessage('Doctor Phone Can\'t Be Empty').isMobilePhone().withMessage('Mobile Formate Wrong'),
+        body('diagnosis').notEmpty().withMessage('Diagnosis Can\'t Be Empty'),
+        body('treatmentPlan').notEmpty().withMessage('TreatmentPlan Can\'t Be Empty'),
+        body('prescriptionInstruction.medication').notEmpty().withMessage('Medication Can\'t Be Empty'),
+        body('prescriptionInstruction.dosage').notEmpty().withMessage('Dosage Can\'t Be Empty'),
+        body('prescriptionInstruction.frequency').notEmpty().withMessage('Frequency Can\'t Be Empty'),
+        body('prescriptionInstruction.duration').notEmpty().withMessage('Duration Can\'t Be Empty'),
+        body('consultations.consultationDate').notEmpty().withMessage('Consultation Date Can\'t Be Empty'),
+        
     ];
 };
 

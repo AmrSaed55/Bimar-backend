@@ -32,6 +32,9 @@ const createMedicalRecord = async (req, res) => {
     patient.medicalRecord = medicalRecordData;
     console.log('Saving Medical Record:', patient.medicalRecord);
     await patient.save();
+    console.log(patient.medicalRecord)
+
+     
 
     res.status(201).json({
       status: 'success',

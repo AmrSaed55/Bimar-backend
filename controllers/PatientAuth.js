@@ -56,7 +56,8 @@ const login = async (req, res) => {
     };
 
     let token = jwt.sign({
-        email : credetials.userEmail
+        email : getPatient.userEmail,
+        name : getPatient.userName
     }, process.env.jwtKey);
     res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
