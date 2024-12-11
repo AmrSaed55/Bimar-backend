@@ -4,71 +4,62 @@ const errorHandler = require('./../utilities/errorHandler');
 const { validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
 
-const creatDiagnosis = async(req,res) => {
-    try{
+const creatDiagnosis = async (req, res) => {
+  try {
 
+    // Extract file arrays with a fallback
+    let xrayImgs = req.files?.Xray || []
+    let labtestImgs = req.files?.labResults || []
+
+    // Map file paths
+    let xrayImgPaths = xrayImgs.map(file => file.path)
+    let labtestImgPaths = labtestImgs.map(file => file.path)
+
+    // Extract and log consultations
+    let consultations = req.body.consultations || []
+
+    // Add file paths and consultations to new diagnosis
     let newDiagnosis = req.body
-    const isFollowup = req.query.followup === 'true'
-        let xrayImgs = req.files['Xray'];
-        let labtestImgs = req.files['labResults'];
+    newDiagnosis.Xray = xrayImgPaths
+    newDiagnosis.labResults = labtestImgPaths
+    newDiagnosis.consultations = consultations
 
-        // Handle file paths
-        let xrayImgPaths = xrayImgs ? xrayImgs.map(file => file.path) : [];
-        let labtestImgPaths = labtestImgs ? labtestImgs.map(file => file.path) : []
-
-        console.log(labtestImgPaths)
-        console.log(xrayImgPaths)
-
-
-        newDiagnosis.xrayImgs = xrayImgPaths
-        newDiagnosis.labtestImgs = labtestImgPaths
+    // Validation
     let validationError = validationResult(req)
-    if(!validationError.isEmpty()){
-        throw validationError
+    if (!validationError.isEmpty()) {
+      throw validationError
     }
 
+    // Token Verification
     const token = req.cookies.jwt
-    if(!token){
-        throw "token not found"
+    if (!token) {
+      throw "Token not found"
     }
-    const decoded = jwt.verify(token, process.env.jwtKey);
-    const email = decoded.email;
-    if(!email){
-        throw "Must Login First"
-    }
-
-    const patient = await PatientModel.findOne({userEmail : email})
-    if(!patient){
-        throw "Patient Not Found"
+    const decoded = jwt.verify(token, process.env.jwtKey)
+    const email = decoded.email
+    if (!email) {
+      throw "Must Login First"
     }
 
-
-    if (!isFollowup) {
-        delete newDiagnosis.consultations
-        }
-        
-        patient.Diagnosis.push(newDiagnosis);
-
-        
-        await patient.save();
-
-        if (!isFollowup) {
-            await PatientModel.updateOne(
-                { userEmail: email, "Diagnosis._id": patient.Diagnosis[patient.Diagnosis.length - 1]._id },
-                { $unset: { "Diagnosis.$.consultations": "" } }
-            );
-            }
-
-        res.status(201).json({
-            status: responseMsgs.SUCCESS,
-            data: "Added Successfully",
-            })
-
-        console.log(patient.Diagnosis)
-    }catch(er){
-    console.log(er)
-    errorHandler(res , er)
+    // Fetch Patient
+    const patient = await PatientModel.findOne({ userEmail: email })
+    if (!patient) {
+      throw "Patient Not Found"
     }
+
+    // Save Diagnosis
+    patient.Diagnosis.push(newDiagnosis)
+    await patient.save()
+
+    res.status(201).json({
+      status: responseMsgs.SUCCESS,
+      data: "Added Successfully",
+    });
+
+  } catch (err) {
+    console.error(err)
+    errorHandler(res, err)
+  }
 }
 
 const getDiagnosis = async (req,res)=>{
