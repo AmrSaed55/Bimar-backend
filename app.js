@@ -4,8 +4,9 @@ const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 dotenv.config()
 const cookieParse = require('cookie-parser')
-const helmet = require('helmet');
+const helmet = require('helmet')
 const path = require('node:path')
+const Cors = require('cors')
 
 
 const patientAuth = require("./Routes/PatientAuth");
@@ -25,7 +26,12 @@ mongoose.connect(process.env.DB).then(()=>{
   console.log('DB Connected')
 }).catch((err)=>{
   console.log(err);
-});
+})
+
+app.use(Cors({
+  origin : 'http://localhost:5173',
+  credentials : true
+}))
 
 app.listen(process.env.port||3000, () => {
   console.log(`Listening on port ${process.env.port}`);
