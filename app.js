@@ -15,8 +15,6 @@ const doctorRoutes = require('./Routes/doctorRoute');
 const diagnosisRoute = require('./Routes/diagnosisRoute');
 const patientRecordRoute = require('./Routes/personalRecordRoute');
 
-const errorMW = require('./middlewares/errorMw');
-
 //load environment variables for debugging 
 console.log(process.env);
 
@@ -35,9 +33,7 @@ app.listen(process.env.port||3000, () => {
   console.log(`Listening on port ${process.env.port}`);
 });
 
-
 app.use(express.urlencoded({extended:true}));
-app.use(errorMW);
 app.use(express.static(path.join(__dirname,'')))
 app.use(express.json())
 app.use(cookieParse())

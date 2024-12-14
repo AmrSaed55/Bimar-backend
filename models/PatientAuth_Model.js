@@ -87,6 +87,16 @@ const PatientSchema = mongoose.Schema({
   },
 });
 
+PatientSchema.pre('validate', function(next) {
+    if (this.personalRecords && this.personalRecords.Gender === 'Female') {
+        if (this.personalRecords.wifesNumber !== undefined) {
+            delete this.personalRecords.wifesNumber;
+            console.log('Removed wifesNumber for female patient (validate)');
+        }
+    }
+    next();
+});
+
 const PatientModel = mongoose.model("PatientData", PatientSchema);
 
 module.exports = PatientModel;

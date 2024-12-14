@@ -8,7 +8,6 @@ const User = require('./../models/PatientAuth_Model')
 //   return regex.test(value);
 // };
 
-//till they answer there one more validation for the wifes number and number of children 
 const userValidation = ()=>{
     return[
         body('userName').notEmpty().withMessage('Name cant be Empty'),
@@ -83,8 +82,11 @@ const userValidation = ()=>{
                 if (value === undefined || value === null) {
                     throw('wifesNumber cant be Empty');
                 }
-                if (['Married', 'Divorced', 'Widowed'].includes(req.body.personalRecords.familyStatus) && value === 0) {
-                    throw('wifesNumber cannot be zero if family status is Married, Divorced, or Widowed');
+                if (['Married'].includes(req.body.personalRecords.familyStatus) && value === 0) {
+                    throw('wifesNumber cannot be zero if family status is Married');
+                }
+                if(['Single','Divorced','Widowed'].includes(req.body.personalRecords.familyStatus) && value !=0){
+                    throw('WifesNumber should be zero');
                 }
             }
             return true;
