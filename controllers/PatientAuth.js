@@ -9,10 +9,12 @@ const nodemailer = require("nodemailer");
 const register = async (req, res) => {
   try {
     let newPatientData = req.body;
+
     let validationError = validationResult(req);
     if (!validationError.isEmpty()) {
       throw validationError;
     }
+
 
     let hashedPassword = await bcrypt.hash(newPatientData.userPassword, 6);
     let addPatient = await Patient.create({
