@@ -9,6 +9,7 @@ const DoctorSchema = mongoose.Schema({
   doctorPassword: String,
   nationalID: String,
   Gender: { type: String, enum: ["Male", "Female"] },
+  doctorImage: { type: String, default: null },
   field: {
     type: String,
     enum: [

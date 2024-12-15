@@ -16,6 +16,9 @@ const generateOtp = () => {
 const register = async (req, res) => {
   try {
     let newDoctorData = req.body;
+    if (req.file) {
+      newDoctorData.doctorImage = req.file?.path; // Save image path
+    }
     let validationError = validationResult(req);
     if (!validationError.isEmpty()) {
       throw validationError;
@@ -26,6 +29,37 @@ const register = async (req, res) => {
       ...newDoctorData,
       doctorPassword: hashedPassword,
     });
+
+    // Send a welcome email
+
+      const transporter = nodemailer.createTransport({
+      service: "gmail",
+      port: parseInt(process.env.EMAIL_PORT) || 587,
+      auth: {
+        user: process.env.USER,
+        pass: process.env.PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: "bimar.med24@gmail.com",
+      to: newDoctorData.doctorEmail,
+      subject: "Welcome to Bimar",
+      html: ` <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;"> 
+                <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px;"> 
+                  <h1 style="background-color: #16423C; color: white; padding: 30px; text-align: center;">👋 Welcome to Our App</h1> 
+                  <div style="padding: 30px;"> 
+                  <h2>Hello, ${newDoctorData.doctorName} 👋</h2> 
+                  <p>We're excited to have you on board as part of our community. You can now log in and start exploring our platform.</p> 
+                  <p>If you have any questions, feel free to reach out to our support team.</p> 
+                  <p>Best regards,</p> 
+                  <p>Bimar's Team</p> 
+                  </div> 
+                </div> 
+              </div>`,
+    };
+
+    await transporter.sendMail(mailOptions);
 
     res.status(201).json({
       status: responseMsgs.SUCCESS,
@@ -41,7 +75,9 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     let credentials = req.body;
-    let getDoctor = await doctor.findOne({ doctorEmail: credentials.doctorEmail });
+    let getDoctor = await doctor.findOne({
+      doctorEmail: credentials.doctorEmail,
+    });
     if (!getDoctor) {
       throw "User Not Found";
     }
@@ -62,16 +98,22 @@ const login = async (req, res) => {
       field: getDoctor.field,
     };
 
-    let token = jwt.sign({ email: credentials.doctorEmail }, process.env.jwtKey);
-    res.status(200).cookie("jwt", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    }).json({
-      status: responseMsgs.SUCCESS,
-      data: "Logged In Successfully",
-      doctor: doctorData,
-    });
+    let token = jwt.sign(
+      { email: credentials.doctorEmail },
+      process.env.jwtKey
+    );
+    res
+      .status(200)
+      .cookie("jwt", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      })
+      .json({
+        status: responseMsgs.SUCCESS,
+        data: "Logged In Successfully",
+        doctor: doctorData,
+      });
   } catch (er) {
     console.log(er);
     errorHandler(res, er);
@@ -117,7 +159,7 @@ const forgetPassword = async (req, res) => {
             <p>This OTP is valid for 10 minutes. If not requested, ignore this email.</p>
           </div>
         </div>
-      </div>`
+      </div>`,
     };
 
     await transporter.sendMail(mailOptions);
@@ -202,11 +244,13 @@ const resetPassword = async (req, res) => {
 
     res.clearCookie("otp");
 
-    res.status(200).json(
-      update
-        ? { data: "Password updated" }
-        : { data: "Password update failed" }
-    );
+    res
+      .status(200)
+      .json(
+        update
+          ? { data: "Password updated" }
+          : { data: "Password update failed" }
+      );
   } catch (err) {
     console.log(err);
     errorHandler(res, err);

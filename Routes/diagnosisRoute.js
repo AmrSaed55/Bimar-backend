@@ -2,10 +2,10 @@ const express = require('express')
 const router = express.Router()
 const diagnosisController = require ('./../controllers/Diagnosis')
 const Diagnosisvalidator = require('./../validation/patientAuthValid')
-const upload = require('./../utilities/imagUpload')
+const uploadDig = require('./../utilities/imagUpload')
 
 router.route('/')
-.post(upload.fields([
+.post(uploadDig.upload.fields([
     { name: 'Xray', maxCount: 5 },
     { name: 'labResults', maxCount: 5 },
   ]),Diagnosisvalidator.DiagnosisValidation(),diagnosisController.creatDiagnosis)
