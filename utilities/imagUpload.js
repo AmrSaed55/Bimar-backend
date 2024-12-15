@@ -44,7 +44,28 @@ const docProfile = multer.diskStorage({
   },
 });
 
+const patientProfile = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/patients/profilePics");
+  },
+
+  filename: (req, file, cb) => {
+    let originalName = path.basename(
+      file.originalname,
+      path.extname(file.originalname)
+    );
+    let ext = file.mimetype.split("/")[1];
+    const token = req.cookies.jwt;
+    const decoded = jwt.verify(token, process.env.jwtKey);
+    const userName = decoded.name ? decoded.name : "unknown patient";
+    const date = new Date().toISOString().split("T")[0];
+    let name = originalName + "-" + userName + "-" + date + "." + ext;
+    cb(null, name);
+  },
+});
+
 const upload = multer({ storage: storage });
 const uploadDocProfile = multer({ storage: docProfile });
+const uploadPatientProfile = multer({ storage: patientProfile });
 
-module.exports = { upload, uploadDocProfile };
+module.exports = { upload, uploadDocProfile, uploadPatientProfile };

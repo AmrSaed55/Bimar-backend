@@ -258,10 +258,47 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const updateProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      throw "No image file provided";
+    }
+
+    const token = req.cookies.jwt;
+    if (!token) {
+      throw "No Token Provided";
+    }
+
+    const decoded = jwt.verify(token, process.env.jwtKey);
+    const email = decoded.email;
+
+    const patient = await Patient.findOne({ userEmail: email });
+    if (!patient) {
+      throw "Patient not found";
+    }
+
+    // Update profile image path
+    patient.profileImage = req.file.path;
+    await patient.save();
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: {
+        message: "Profile picture updated successfully",
+        profileImage: patient.profileImage
+      }
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
 module.exports = {
   register,
   login,
   forgetpassword,
   resetPassword,
   verifyotp,
+  updateProfilePicture
 };

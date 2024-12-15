@@ -4,6 +4,6 @@ const PatientRecordController = require('./../controllers/PatientRecordControlle
 // const patientValidator = require('../validation/patientAuthValid')
 
 router.get('/',PatientRecordController.getPatientRecords);
-router.put('/'/*,patientValidator.personalRecordsValidation()*/,PatientRecordController.updatePersonalRecords);
+router.put('/',PatientRecordController.updatePersonalRecords);
 
 module.exports = router;
