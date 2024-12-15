@@ -17,14 +17,11 @@ const creatDiagnosis = async (req, res) => {
     let xrayImgPaths = xrayImgs.map(file => file.path)
     let labtestImgPaths = labtestImgs.map(file => file.path)
 
-    // Extract and log consultations
-    let consultations = req.body.consultations || []
 
     // Add file paths and consultations to new diagnosis
     let newDiagnosis = req.body
     newDiagnosis.Xray = xrayImgPaths
     newDiagnosis.labResults = labtestImgPaths
-    // newDiagnosis.consultations = consultations
 
       if (!isFollowup) {
       delete newDiagnosis.consultations;
