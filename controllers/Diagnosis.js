@@ -7,6 +7,8 @@ const jwt = require("jsonwebtoken");
 const creatDiagnosis = async (req, res) => {
   try {
 
+    const isFollowup = req.query.followup === 'true'
+
     // Extract file arrays with a fallback
     let xrayImgs = req.files?.Xray || []
     let labtestImgs = req.files?.labResults || []
@@ -22,7 +24,11 @@ const creatDiagnosis = async (req, res) => {
     let newDiagnosis = req.body
     newDiagnosis.Xray = xrayImgPaths
     newDiagnosis.labResults = labtestImgPaths
-    newDiagnosis.consultations = consultations
+    // newDiagnosis.consultations = consultations
+
+      if (!isFollowup) {
+      delete newDiagnosis.consultations;
+    }
 
     // Validation
     let validationError = validationResult(req)
@@ -47,9 +53,20 @@ const creatDiagnosis = async (req, res) => {
       throw "Patient Not Found"
     }
 
+    if (!isFollowup) {
+      delete newDiagnosis.consultations;
+    }
+
     // Save Diagnosis
     patient.Diagnosis.push(newDiagnosis)
     await patient.save()
+
+    if (!isFollowup) {
+      await PatientModel.updateOne(
+        { userEmail: email, "Diagnosis._id": patient.Diagnosis[patient.Diagnosis.length - 1]._id },
+        { $unset: { "Diagnosis.$.consultations": "" } }
+      );
+    }
 
     res.status(201).json({
       status: responseMsgs.SUCCESS,

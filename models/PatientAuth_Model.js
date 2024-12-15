@@ -87,14 +87,15 @@ const PatientSchema = mongoose.Schema({
   },
 });
 
-PatientSchema.pre('validate', function(next) {
-    if (this.personalRecords && this.personalRecords.Gender === 'Female') {
-        if (this.personalRecords.wifesNumber !== undefined) {
-            delete this.personalRecords.wifesNumber;
-            console.log('Removed wifesNumber for female patient (validate)');
-        }
-    }
-    next();
+// Pre-save middleware to remove wifesNumber for female patients
+PatientSchema.pre('save', function (next) {
+  if (this.personalRecords && this.personalRecords.Gender === 'Female') {
+      if ('wifesNumber' in this.personalRecords) {
+          this.updateOne({ $unset: { "personalRecords.wifesNumber": "" } }).exec();
+          console.log('Removed wifesNumber for female patient (save)');
+      }
+  }
+  next();
 });
 
 const PatientModel = mongoose.model("PatientData", PatientSchema);

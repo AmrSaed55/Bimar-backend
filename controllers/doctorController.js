@@ -7,10 +7,7 @@ const responseMsgs = require("./../utilities/responseMsgs");
 const errorHandler = require("./../utilities/errorHandler");
 const nodemailer = require("nodemailer");
 
-// Generate OTP Function
-const generateOtp = () => {
-  return String(Math.floor(10000 + Math.random() * 90000)).padStart(5, "0");
-};
+
 
 // Register Function
 const register = async (req, res) => {
@@ -78,6 +75,10 @@ const login = async (req, res) => {
   }
 };
 
+// Generate OTP Function
+const generateOtp = () => {
+  return String(Math.floor(10000 + Math.random() * 90000)).padStart(5, "0");
+};
 // Forget Password Function
 const forgetPassword = async (req, res) => {
   try {

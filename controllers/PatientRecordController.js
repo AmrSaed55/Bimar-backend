@@ -40,7 +40,7 @@ const updatePersonalRecords = async(req,res)=>{
         const decoded = jwt.verify(token, process.env.jwtKey);
         const userEmail = decoded.email;
 
-        const patient = await PatientModel.findOne({ userEmail }).select("personalRecords");
+        const patient = await PatientModel.findOne({ userEmail }).select("personalRecords")
         if (!patient) {
             throw "Patient not found";
         }
