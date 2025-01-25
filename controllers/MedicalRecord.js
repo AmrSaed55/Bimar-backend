@@ -1,8 +1,8 @@
-const PatientModel = require("../models/PatientAuth_Model");
-const responseMsgs = require('./../utilities/responseMsgs');
-const errorHandler = require('./../utilities/errorHandler');
-const { validationResult } = require("express-validator");
-const jwt = require('jsonwebtoken');
+import PatientModel from "../models/PatientAuth_Model.js";
+import responseMsgs from './../utilities/responseMsgs.js';
+import errorHandler from './../utilities/errorHandler.js';
+import { validationResult } from "express-validator";
+import jwt from 'jsonwebtoken';
 
 const createMedicalRecord = async (req, res) => {
   try {
@@ -142,7 +142,7 @@ const deleteMedicalRecord = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   createMedicalRecord,
   getMedicalRecords,
   updateMedicalRecord,

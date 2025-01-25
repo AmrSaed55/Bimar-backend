@@ -1,5 +1,5 @@
-const { body } = require("express-validator");
-const Doctor = require("./../models/doctorModel");
+import { body } from "express-validator";
+import Doctor from "./../models/doctorModel.js";
 
 const phoneValidator = (value) => {
   const regex = /^01[0-2,5]\d{1,8}$/;
@@ -166,4 +166,4 @@ const doctorValidation = () => {
   ];
 };
 
-module.exports = doctorValidation;
+export default doctorValidation;

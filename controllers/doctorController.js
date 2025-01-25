@@ -1,13 +1,10 @@
-// Required Modules
-const doctor = require("./../models/doctorModel");
-const { validationResult } = require("express-validator");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const responseMsgs = require("./../utilities/responseMsgs");
-const errorHandler = require("./../utilities/errorHandler");
-const nodemailer = require("nodemailer");
-
-
+import doctor from "../models/doctorModel.js";
+import { validationResult } from "express-validator";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import responseMsgs from "../utilities/responseMsgs.js";
+import errorHandler from "../utilities/errorHandler.js";
+import nodemailer from "nodemailer";
 
 // Register Function
 const register = async (req, res) => {
@@ -258,7 +255,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = {
+export default {
   register,
   login,
   forgetPassword,

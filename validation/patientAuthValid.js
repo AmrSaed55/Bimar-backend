@@ -1,5 +1,5 @@
-const { body } = require("express-validator");
-const User = require("./../models/PatientAuth_Model");
+import { body } from "express-validator";
+import User from "../models/PatientAuth_Model.js";
 
 // Phone number validation function
 // const phoneValidator = (value) => {
@@ -7,7 +7,7 @@ const User = require("./../models/PatientAuth_Model");
 //   return regex.test(value);
 // };
 
-const userValidation = () => {
+ const userValidation = () => {
   return [
     body("userName").notEmpty().withMessage("Name cant be Empty"),
     body("userPassword")
@@ -153,7 +153,7 @@ const userValidation = () => {
       ),
   ];
 };
-const medicalRecordValidation = () => {
+ const medicalRecordValidation = () => {
   return [
     body("allgeric").notEmpty().withMessage("Allergic field cannot be empty"),
     body("chronicMedications")
@@ -183,7 +183,7 @@ const medicalRecordValidation = () => {
   ];
 };
 
-const DiagnosisValidation = () => {
+ const DiagnosisValidation = () => {
   return [
     body("doctorName").notEmpty().withMessage("Doctor Name Can't Be Empty"),
     body("doctorPhone")
@@ -263,8 +263,8 @@ const DiagnosisValidation = () => {
 //     ];
 // };
 
-module.exports = {
+export default {
   userValidation,
   medicalRecordValidation,
-  DiagnosisValidation /*,personalRecordsValidation*/,
+  DiagnosisValidation
 };
