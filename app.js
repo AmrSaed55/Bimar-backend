@@ -13,6 +13,8 @@ import doctorRoutes from "./Routes/doctorRoute.js";
 import diagnosisRoute from "./Routes/diagnosisRoute.js";
 import patientRecordRoute from "./Routes/personalRecordRoute.js";
 
+import connectToMongoDB from "./db/connectToMongoDB.js";
+
 dotenv.config();
 
 const app = express();
@@ -20,15 +22,6 @@ const app = express();
 // Resolve __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-//load environment variables for debugging 
-// console.log(process.env);
-
-mongoose.connect(process.env.DB).then(()=>{
-  console.log('DB Connected')
-}).catch((err)=>{
-  console.log(err);
-})
 
 app.use(
   cors({
@@ -52,5 +45,6 @@ app.use("/patientRecords", patientRecordRoute);
 
 const Port = process.env.PORT || 3000;
 app.listen(Port, () => {
+  connectToMongoDB();
   console.log(`Listening on port ${Port}`);
 });
