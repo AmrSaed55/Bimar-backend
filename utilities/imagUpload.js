@@ -1,6 +1,6 @@
-const multer = require("multer");
-const path = require("path");
-const jwt = require("jsonwebtoken");
+import multer from 'multer';
+import path from 'path';
+import jwt from 'jsonwebtoken';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -68,4 +68,4 @@ const upload = multer({ storage: storage });
 const uploadDocProfile = multer({ storage: docProfile });
 const uploadPatientProfile = multer({ storage: patientProfile });
 
-module.exports = { upload, uploadDocProfile, uploadPatientProfile };
+export default{ upload, uploadDocProfile, uploadPatientProfile };

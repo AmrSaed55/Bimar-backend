@@ -1,8 +1,9 @@
-const express = require("express");
+import express from 'express';
+import doctorController from '../controllers/doctorController.js';
+import doctorValidation from '../validation/doctorValid.js';
+import uploadProfile from './../utilities/imagUpload.js';
+
 const router = express.Router();
-const doctorController = require("../controllers/doctorController");
-const doctorValidation = require("../validation/doctorValid");
-const uploadProfile = require("./../utilities/imagUpload");
 
 router
   .route("/doctorRegister")
@@ -16,4 +17,4 @@ router.post("/forget-password", doctorController.forgetPassword);
 router.post("/verify-otp", doctorController.verifyOtp);
 router.post("/reset-password", doctorController.resetPassword);
 
-module.exports = router;
+export default router;

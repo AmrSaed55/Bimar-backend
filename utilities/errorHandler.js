@@ -1,5 +1,4 @@
-const responseMsgs = require('./responseMsgs')
-
+import responseMsgs from './responseMsgs.js';
 const errorHandler = (res,er)=>{
     let errorResult
 
@@ -19,4 +18,4 @@ const errorHandler = (res,er)=>{
     })
 }
 
-module.exports = errorHandler
+export default errorHandler

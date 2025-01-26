@@ -1,45 +1,50 @@
-const express = require("express");
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import cors from "cors";
+
+import patientAuth from "./Routes/patientAuth.js";
+import medicalRecordRoutes from "./Routes/medicalRecordRoutes.js";
+import doctorRoutes from "./Routes/doctorRoute.js";
+import diagnosisRoute from "./Routes/diagnosisRoute.js";
+import patientRecordRoute from "./Routes/personalRecordRoute.js";
+
+import connectToMongoDB from "./db/connectToMongoDB.js";
+
+dotenv.config();
+
 const app = express();
-const mongoose = require('mongoose')
-const dotenv = require('dotenv')
-dotenv.config()
-const cookieParse = require('cookie-parser')
-const helmet = require('helmet')
-const path = require('node:path')
-const Cors = require('cors')
 
+// Resolve __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const patientAuth = require("./Routes/PatientAuth");
-const medicalRecordRoutes = require('./Routes/medicalRecordRoutes');
-const doctorRoutes = require('./Routes/doctorRoute');
-const diagnosisRoute = require('./Routes/diagnosisRoute');
-const patientRecordRoute = require('./Routes/personalRecordRoute');
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
-//load environment variables for debugging 
-console.log(process.env);
-
-mongoose.connect(process.env.DB).then(()=>{
-  console.log('DB Connected')
-}).catch((err)=>{
-  console.log(err);
-})
-
-app.use(Cors({
-  origin : 'http://localhost:5173',
-  credentials : true
-}))
-
-app.listen(process.env.port||3000, () => {
-  console.log(`Listening on port ${process.env.port}`);
-});
-
-app.use(express.urlencoded({extended:true}));
-app.use(express.static(path.join(__dirname,'')))
-app.use(express.json())
-app.use(cookieParse())
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "")));
+app.use(express.json());
+app.use(cookieParser());
 app.use(helmet());
-app.use('/patientsAuth',patientAuth)
-app.use('/medical-records',medicalRecordRoutes)
-app.use('/Diagnosis',diagnosisRoute)
-app.use('/doctor',doctorRoutes)
-app.use('/patientRecords',patientRecordRoute);
+
+// Routes
+app.use("/patientsAuth", patientAuth);
+app.use("/medical-records", medicalRecordRoutes);
+app.use("/Diagnosis", diagnosisRoute);
+app.use("/doctor", doctorRoutes);
+app.use("/patientRecords", patientRecordRoute);
+
+const Port = process.env.PORT || 3000;
+app.listen(Port, () => {
+  connectToMongoDB();
+  console.log(`Listening on port ${Port}`);
+});

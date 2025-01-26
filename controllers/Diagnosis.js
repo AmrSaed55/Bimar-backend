@@ -1,10 +1,10 @@
-const PatientModel = require("../models/PatientAuth_Model");
-const responseMsgs = require('./../utilities/responseMsgs');
-const errorHandler = require('./../utilities/errorHandler');
-const { validationResult } = require("express-validator");
-const jwt = require("jsonwebtoken");
+import PatientModel from "../models/PatientAuth_Model.js";
+import responseMsgs from "../utilities/responseMsgs.js";
+import errorHandler from "../utilities/errorHandler.js";
+import { validationResult } from "express-validator";
+import jwt from "jsonwebtoken";
 
-const creatDiagnosis = async (req, res) => {
+ const creatDiagnosis = async (req, res) => {
   try {
 
     const isFollowup = req.query.followup === 'true'
@@ -76,7 +76,7 @@ const creatDiagnosis = async (req, res) => {
   }
 }
 
-const getDiagnosis = async (req,res)=>{
+ const getDiagnosis = async (req,res)=>{
 
         const token = req.cookies.jwt
         const decoded = jwt.verify(token, process.env.jwtKey);
@@ -85,7 +85,7 @@ const getDiagnosis = async (req,res)=>{
         res.json(Diagnosis || {data : 'Not FOund'})
 }
 
-const updateDiagnosis = async (req,res)=>{
+ const updateDiagnosis = async (req,res)=>{
 
     let UpdateDiagnosistData = req.body
     const token = req.cookies.jwt
@@ -97,7 +97,7 @@ const updateDiagnosis = async (req,res)=>{
     res.json(update.Diagnosis ? data='Updated Successfulyy' : data='Something wend Wrong')
 }
 
-const deletePrescription = async (req,res) =>{
+ const deletePrescription = async (req,res) =>{
     try{
     const prescriptionId = req.params.id
     const result = await PatientModel.updateOne(
@@ -120,7 +120,7 @@ const deletePrescription = async (req,res) =>{
     
 }
 
-const updatePrescription = async (req, res) => {
+ const updatePrescription = async (req, res) => {
     try {
       const newPrescriptionData = req.body
       const prescriptionId = req.params.id
@@ -147,8 +147,7 @@ const updatePrescription = async (req, res) => {
     }
   }
 
-
-const deleteconsultation= async (req,res) =>{
+ const deleteconsultation= async (req,res) =>{
     try{
         const consultationId = req.params.id
         const result = await PatientModel.updateOne(
@@ -171,7 +170,7 @@ const deleteconsultation= async (req,res) =>{
     
 }
 
-const updateconsultation = async (req,res) =>{
+ const updateconsultation = async (req,res) =>{
     try {
         const newConsultationData = req.body
         const consultationId = req.params.id
@@ -199,8 +198,8 @@ const updateconsultation = async (req,res) =>{
     
 }
 
-module.exports = {
-    creatDiagnosis,
+export default {
+  creatDiagnosis,
     getDiagnosis,
     updateDiagnosis,
     deletePrescription,

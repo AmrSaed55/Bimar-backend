@@ -1,10 +1,11 @@
-const Patient = require("./../models/PatientAuth_Model");
-const { validationResult } = require("express-validator");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const responseMsgs = require("./../utilities/responseMsgs");
-const errorHandler = require("./../utilities/errorHandler");
-const nodemailer = require("nodemailer");
+import Patient from "./../models/PatientAuth_Model.js";
+import { validationResult } from "express-validator";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import responseMsgs from "./../utilities/responseMsgs.js";
+import errorHandler from "./../utilities/errorHandler.js";
+import nodemailer from "nodemailer";
+
 
 const register = async (req, res) => {
   try {
@@ -294,11 +295,11 @@ const updateProfilePicture = async (req, res) => {
   }
 };
 
-module.exports = {
+export default {
   register,
   login,
   forgetpassword,
   resetPassword,
   verifyotp,
-  updateProfilePicture
+  updateProfilePicture,
 };

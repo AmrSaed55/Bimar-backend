@@ -1,7 +1,7 @@
-const responseMsgs = require('../utilities/responseMsgs');
-const errorHandler = require('../utilities/errorHandler');
-const jwt = require('jsonwebtoken');
-const PatientModel = require('../models/PatientAuth_Model');
+import responseMsgs from '../utilities/responseMsgs.js';
+import errorHandler from '../utilities/errorHandler.js';
+import jwt from 'jsonwebtoken';
+import PatientModel from '../models/PatientAuth_Model.js';
 
 const getPatientRecords = async (req,res)=>{
     try{
@@ -58,7 +58,7 @@ const updatePersonalRecords = async(req,res)=>{
     }
 }
 
-module.exports = {
+export default {
     getPatientRecords,
     updatePersonalRecords
-}
+};

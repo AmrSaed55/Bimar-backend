@@ -1,9 +1,10 @@
-const express = require("express");
+import express from "express";
+import PatientRecordController from './../controllers/PatientRecordController.js';
+// import patientValidator from '../validation/patientAuthValid.js';
+
 const router = express.Router();
-const PatientRecordController = require('./../controllers/PatientRecordController');
-// const patientValidator = require('../validation/patientAuthValid')
 
 router.get('/',PatientRecordController.getPatientRecords);
 router.put('/',PatientRecordController.updatePersonalRecords);
 
-module.exports = router;
+export default router;

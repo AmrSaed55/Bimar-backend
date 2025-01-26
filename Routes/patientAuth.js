@@ -1,8 +1,9 @@
-const express = require('express');
+import express from "express";
+import PatinetAuthController from "./../controllers/PatientAuth.js";
+import patientvalidator from "./../validation/patientAuthValid.js";
+import upload from "./../utilities/imagUpload.js";
+
 const router = express.Router();
-const PatinetAuthController = require ('./../controllers/PatientAuth');
-const patientvalidator = require('./../validation/patientAuthValid');
-const upload = require('./../utilities/imagUpload');
 
 router.post('/patientRegister' ,patientvalidator.userValidation(), PatinetAuthController.register);
 router.post('/patientLogin',PatinetAuthController.login);
@@ -14,4 +15,4 @@ router.patch('/update-profile-picture',
   PatinetAuthController.updateProfilePicture
 );
 
-module.exports = router
+export default router;
