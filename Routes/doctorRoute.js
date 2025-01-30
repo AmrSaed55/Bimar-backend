@@ -16,5 +16,6 @@ router.post("/doctorLogin", doctorController.login);
 router.post("/forget-password", doctorController.forgetPassword);
 router.post("/verify-otp", doctorController.verifyOtp);
 router.post("/reset-password", doctorController.resetPassword);
+router.get("/doctors", doctorController.getAllDoctors);
 
 export default router;

@@ -6,7 +6,6 @@ import responseMsgs from "./../utilities/responseMsgs.js";
 import errorHandler from "./../utilities/errorHandler.js";
 import nodemailer from "nodemailer";
 
-
 const register = async (req, res) => {
   try {
     let newPatientData = req.body;
@@ -15,7 +14,6 @@ const register = async (req, res) => {
     if (!validationError.isEmpty()) {
       throw validationError;
     }
-
 
     let hashedPassword = await bcrypt.hash(newPatientData.userPassword, 6);
     let addPatient = await Patient.create({
@@ -54,10 +52,13 @@ const login = async (req, res) => {
       userPhone: getPatient.userPhone,
     };
 
-    let token = jwt.sign({
-        email : getPatient.userEmail,
-        name : getPatient.userName
-    }, process.env.jwtKey);
+    let token = jwt.sign(
+      {
+        email: getPatient.userEmail,
+        name: getPatient.userName,
+      },
+      process.env.jwtKey
+    );
     res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
       data: "Loged In Successfully",
@@ -286,12 +287,41 @@ const updateProfilePicture = async (req, res) => {
       status: responseMsgs.SUCCESS,
       data: {
         message: "Profile picture updated successfully",
-        profileImage: patient.profileImage
-      }
+        profileImage: patient.profileImage,
+      },
     });
   } catch (err) {
     console.log(err);
     errorHandler(res, err);
+  }
+};
+
+// Function to fetch patient data by ID
+const getPatientById = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract the patient ID from the request parameters
+
+    // Find the patient by ID
+    const patient = await Patient.findById(id);
+
+    if (!patient) {
+      return res.status(404).json({
+        status: "FAILURE",
+        message: "Patient not found",
+      });
+    }
+
+    // Return the patient data
+    res.status(200).json({
+      status: "SUCCESS",
+      data: patient,
+    });
+  } catch (error) {
+    console.error("Error fetching patient data:", error);
+    res.status(500).json({
+      status: "FAILURE",
+      message: "An error occurred while fetching patient data",
+    });
   }
 };
 
@@ -302,4 +332,5 @@ export default {
   resetPassword,
   verifyotp,
   updateProfilePicture,
+  getPatientById,
 };

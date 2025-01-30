@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const DoctorSchema = mongoose.Schema({
   doctorName: String,
@@ -56,25 +56,27 @@ const DoctorSchema = mongoose.Schema({
       "Periodontics", // طب اللثة
       "Oral and Maxillofacial Surgery", // جراحة الفم والوجه والفكين
     ],
-    yearsOfExprience: String,
-    syndicateCard: String, //كارنيه النقابة
-    certificates: String,
   },
-  clinc: [
+  yearsOfExprience: String,
+  syndicateID: String,
+  syndicateCard: { type: String, default: null }, //كارنيه النقابة
+  certificates: [{ type: String, default: null }],
+  clinic: [
     {
-      clincCity: String,
-      clincArea: String,
-      clincAddress: String,
-      clincPhone: [String],
-      clincEmail: String,
-      clincWebsite: String,
-      clincOpeningHours: [String],
-      clincWorkDays: [String],
-      clincLocationLinks: String,
+      clinicLicense: { type: String, default: null },
+      clinicCity: String,
+      clinicArea: String,
+      clinicAddress: String,
+      clinicPhone: [String],
+      clinicEmail: String,
+      clinicWebsite: String,
+      clinicOpeningHours: [String],
+      clinicWorkDays: [String],
+      clinicLocationLinks: String,
     },
   ],
 });
 
-const doctor = mongoose.model('doctor', DoctorSchema);
+const doctor = mongoose.model("doctor", DoctorSchema);
 
 export default doctor;

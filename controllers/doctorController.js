@@ -25,8 +25,7 @@ const register = async (req, res) => {
     });
 
     // Send a welcome email
-
-      const transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
       service: "gmail",
       port: parseInt(process.env.EMAIL_PORT) || 587,
       auth: {
@@ -118,6 +117,7 @@ const login = async (req, res) => {
 const generateOtp = () => {
   return String(Math.floor(10000 + Math.random() * 90000)).padStart(5, "0");
 };
+
 // Forget Password Function
 const forgetPassword = async (req, res) => {
   try {
@@ -255,10 +255,25 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Get All Doctors Function
+const getAllDoctors = async (req, res) => {
+  try {
+    const doctors = await doctor.find({});
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: doctors,
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
 export default {
   register,
   login,
   forgetPassword,
   resetPassword,
   verifyOtp,
+  getAllDoctors,
 };
