@@ -10,7 +10,7 @@ const getPatientRecords = async (req,res)=>{
             throw 'No Token Provided';
         }
 
-        const decoded = jwt.verify(token, process.env.jwtKey);
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
         const userEmail = decoded.email;
 
         const patient = await PatientModel.findOne({userEmail}).select('personalRecords');
@@ -37,7 +37,7 @@ const updatePersonalRecords = async(req,res)=>{
             throw 'No Token Provided';
         }
 
-        const decoded = jwt.verify(token, process.env.jwtKey);
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
         const userEmail = decoded.email;
 
         const patient = await PatientModel.findOne({ userEmail }).select("personalRecords")

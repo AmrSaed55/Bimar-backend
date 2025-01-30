@@ -38,7 +38,7 @@ import jwt from "jsonwebtoken";
     if (!token) {
       throw "Token not found"
     }
-    const decoded = jwt.verify(token, process.env.jwtKey)
+    const decoded = jwt.verify(token, process.env.JWT_KEY)
     const email = decoded.email
     if (!email) {
       throw "Must Login First"
@@ -79,7 +79,7 @@ import jwt from "jsonwebtoken";
  const getDiagnosis = async (req,res)=>{
 
         const token = req.cookies.jwt
-        const decoded = jwt.verify(token, process.env.jwtKey);
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
         const email = decoded.email;
         let Diagnosis = await PatientModel.findOne({userEmail:email}).select("Diagnosis")
         res.json(Diagnosis || {data : 'Not FOund'})
@@ -89,7 +89,7 @@ import jwt from "jsonwebtoken";
 
     let UpdateDiagnosistData = req.body
     const token = req.cookies.jwt
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const email = decoded.email;
     let update = await PatientModel.updateOne({userEmail : email})
     update.Diagnosis = await PatientModel.updateOne(UpdateDiagnosistData)

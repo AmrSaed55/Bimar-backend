@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import responseMsgs from "./../utilities/responseMsgs.js";
 import errorHandler from "./../utilities/errorHandler.js";
 import nodemailer from "nodemailer";
+import dotenv from 'dotenv';
+dotenv.config();
 
 const register = async (req, res) => {
   try {
@@ -57,7 +59,7 @@ const login = async (req, res) => {
         email: getPatient.userEmail,
         name: getPatient.userName,
       },
-      process.env.jwtKey
+      process.env.JWT_KEY
     );
     res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
@@ -85,7 +87,7 @@ const forgetpassword = async (req, res) => {
     const otp = generateOtp();
     const userName = patient.userName;
 
-    const token = jwt.sign({ email: userEmail }, process.env.jwtKey, {
+    const token = jwt.sign({ email: userEmail }, process.env.JWT_KEY, {
       expiresIn: "10m",
     });
 
@@ -230,7 +232,7 @@ const resetPassword = async (req, res) => {
       throw "No Token Provided";
     }
 
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const email = decoded.email;
 
     const patient = await Patient.findOne({ userEmail: email });
@@ -271,7 +273,7 @@ const updateProfilePicture = async (req, res) => {
       throw "No Token Provided";
     }
 
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const email = decoded.email;
 
     const patient = await Patient.findOne({ userEmail: email });

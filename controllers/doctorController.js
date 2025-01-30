@@ -93,7 +93,7 @@ const login = async (req, res) => {
 
     let token = jwt.sign(
       { email: credentials.doctorEmail },
-      process.env.jwtKey
+      process.env.JWT_KEY
     );
     res
       .status(200)
@@ -129,7 +129,7 @@ const forgetPassword = async (req, res) => {
 
     const otp = generateOtp();
 
-    const token = jwt.sign({ email: doctorEmail }, process.env.jwtKey, {
+    const token = jwt.sign({ email: doctorEmail }, process.env.JWT_KEY, {
       expiresIn: "10m",
     });
 
@@ -221,7 +221,7 @@ const resetPassword = async (req, res) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.jwtKey);
+      decoded = jwt.verify(token, process.env.JWT_KEY);
     } catch (err) {
       throw "Invalid or expired token";
     }

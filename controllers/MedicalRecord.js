@@ -16,7 +16,7 @@ const createMedicalRecord = async (req, res) => {
       throw "No Token Provided";
     }
 
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const userEmail = decoded.email;
 
     const medicalRecordData = req.body;
@@ -56,7 +56,7 @@ const getMedicalRecords = async (req, res) => {
       throw "No Token Provided";
     }
 
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const userEmail = decoded.email;
 
     // Find patient by email
@@ -86,7 +86,7 @@ const updateMedicalRecord = async (req, res) => {
       throw "No Token Provided";
     }
 
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const userEmail = decoded.email;
 
     // Find patient by email
@@ -119,7 +119,7 @@ const deleteMedicalRecord = async (req, res) => {
       throw "No Token Provided";
     }
 
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const userEmail = decoded.email;
 
     // Find patient by email

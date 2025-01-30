@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
     );
     let ext = file.mimetype.split("/")[1];
     const token = req.cookies.jwt;
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const userName = decoded.name ? decoded.name : "unKnown User";
     const date = new Date().toISOString().split("T")[0];
     let name = orginalName + "-" + userName + "-" + date + "." + ext;
@@ -36,7 +36,7 @@ const docProfile = multer.diskStorage({
     );
     let ext = file.mimetype.split("/")[1];
     const token = req.cookies.jwt;
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const docName = decoded.name ? decoded.name : "unKnown User";
     const date = new Date().toISOString().split("T")[0];
     let name = orginalName + "-" + docName + "-" + date + "." + ext;
@@ -56,7 +56,7 @@ const patientProfile = multer.diskStorage({
     );
     let ext = file.mimetype.split("/")[1];
     const token = req.cookies.jwt;
-    const decoded = jwt.verify(token, process.env.jwtKey);
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
     const userName = decoded.name ? decoded.name : "unknown patient";
     const date = new Date().toISOString().split("T")[0];
     let name = originalName + "-" + userName + "-" + date + "." + ext;
