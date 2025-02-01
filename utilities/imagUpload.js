@@ -35,9 +35,6 @@ const docProfile = multer.diskStorage({
       path.extname(file.originalname)
     );
     let ext = file.mimetype.split("/")[1];
-    // const token = req.cookies.jwt;
-    // const decoded = jwt.verify(token, process.env.JWT_KEY);
-    // const docName = decoded.name ? decoded.name : "unKnown User";
     const date = new Date().toISOString().split("T")[0];
     let name = orginalName + "-"  + date + "." + ext;
     cb(null, name);
