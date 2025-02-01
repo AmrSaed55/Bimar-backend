@@ -10,13 +10,30 @@ import nodemailer from "nodemailer";
 const register = async (req, res) => {
   try {
     let newDoctorData = req.body;
-    if (req.file) {
-      newDoctorData.doctorImage = req.file?.path; // Save image path
+
+    if (req.files) {
+      // Assign doctorImage and syndicateCard
+      newDoctorData.doctorImage = req.files.find(file => file.fieldname === 'doctorImage')?.path || null;
+      newDoctorData.syndicateCard = req.files.find(file => file.fieldname === 'syndicateCard')?.path || null;
+      newDoctorData.certificates = req.files.filter(file => file.fieldname === 'certificates').map(file => file.path);
+
+      // Process clinicLicense inside the clinic array
+      if (Array.isArray(newDoctorData.clinic)) {
+        newDoctorData.clinic = newDoctorData.clinic.map((clinic, index) => {
+          const clinicLicenseFile = req.files.find(file => file.fieldname === `clinic[${index}][clinicLicense]`);
+          return {
+            ...clinic,
+            clinicLicense: clinicLicenseFile ? clinicLicenseFile.path : null,
+          };
+        });
+      }
     }
+    
     let validationError = validationResult(req);
     if (!validationError.isEmpty()) {
       throw validationError;
     }
+
 
     let hashedPassword = await bcrypt.hash(newDoctorData.doctorPassword, 6);
     let addDoctor = await doctor.create({
