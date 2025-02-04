@@ -286,6 +286,147 @@ const getAllDoctors = async (req, res) => {
   }
 };
 
+// Delete Doctor Function
+const deleteDoctor = async (req, res) => {
+  try {
+    const { email } = req.body; // Assuming the email is sent in the request body
+
+    if (!email) {
+      throw "Email is required to delete the account";
+    }
+
+    const result = await doctor.deleteOne({ doctorEmail: email });
+
+    if (result.deletedCount === 0) {
+      throw "Doctor not found or already deleted";
+    }
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: "Doctor account deleted successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
+// Delete Clinic Function
+const deleteClinic = async (req, res) => {
+  try {
+    const { doctorEmail, clinicId } = req.body; // Assuming the email and clinic ID are sent in the request body
+
+    if (!doctorEmail || !clinicId) {
+      throw "Doctor email and clinic ID are required to delete the clinic";
+    }
+
+    const result = await doctor.updateOne(
+      { doctorEmail: doctorEmail },
+      { $pull: { clinic: { _id: clinicId } } } // Use $pull to remove the clinic by ID
+    );
+
+    if (result.modifiedCount === 0) {
+      throw "Clinic not found or already deleted";
+    }
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: "Clinic deleted successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
+// Update Doctor Function
+const updateDoctor = async (req, res) => {
+  try {
+    const { email } = req.body; // Extract email from the request body
+
+    if (!email) {
+      throw "Email is required to update the doctor";
+    }
+
+    // Create an object to hold the fields to update
+    const updateData = {};
+
+    // Check for each field and add it to updateData if it exists in the request body
+    if (req.body.doctorName) updateData.doctorName = req.body.doctorName;
+    if (req.body.doctorDateOfBirth) updateData.doctorDateOfBirth = req.body.doctorDateOfBirth;
+    if (req.body.doctorPhone) updateData.doctorPhone = req.body.doctorPhone;
+    if (req.body.doctorEmail) updateData.doctorEmail = req.body.doctorEmail;
+
+    // Do not allow changes to the following fields
+    // Commented out to prevent updates
+    // if (req.body.nationalID) updateData.nationalID = req.body.nationalID; 
+    // if (req.body.field) updateData.field = req.body.field; 
+    // if (req.body.syndicateID) updateData.syndicateID = req.body.syndicateID; 
+    // if (req.body.syndicateCard) updateData.syndicateCard = req.body.syndicateCard; 
+    // if (req.body.certificates) updateData.certificates = req.body.certificates; 
+
+    // Update the doctor in the database
+    const result = await doctor.updateOne({ doctorEmail: email }, { $set: updateData });
+
+    if (result.modifiedCount === 0) {
+      throw "Doctor not found or no changes made";
+    }
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: "Doctor updated successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
+const updateClinic = async (req, res) => {
+  try {
+    const { doctorEmail, clinicId, clinicData } = req.body; // Extract email, clinic ID, and new clinic data
+
+    if (!doctorEmail || !clinicId || !clinicData) {
+      throw "Doctor email, clinic ID, and clinic data are required to update the clinic";
+    }
+
+    // Create an object to hold the fields to update
+    const updateData = {};
+
+    // Check for each field in clinicData and add it to updateData if it exists
+    if (clinicData.clinicCity) updateData["clinic.$.clinicCity"] = clinicData.clinicCity;
+    if (clinicData.clinicArea) updateData["clinic.$.clinicArea"] = clinicData.clinicArea;
+    if (clinicData.clinicAddress) updateData["clinic.$.clinicAddress"] = clinicData.clinicAddress;
+    if (clinicData.clinicPhone) updateData["clinic.$.clinicPhone"] = clinicData.clinicPhone;
+    if (clinicData.clinicEmail) updateData["clinic.$.clinicEmail"] = clinicData.clinicEmail;
+    if (clinicData.clinicWebsite) updateData["clinic.$.clinicWebsite"] = clinicData.clinicWebsite;
+    if (clinicData.clinicLocationLinks) updateData["clinic.$.clinicLocationLinks"] = clinicData.clinicLocationLinks;
+    if (clinicData.Price) updateData["clinic.$.Price"] = clinicData.Price;
+
+    // Do not allow changes to the following fields
+    // Commented out to prevent updates
+    // if (clinicData.clinicLicense) updateData.clinicLicense = clinicData.clinicLicense;
+
+    // Update the specific clinic in the database
+    const result = await doctor.updateOne(
+      { doctorEmail: doctorEmail, "clinic._id": clinicId },
+      { $set: updateData }
+    );
+
+    if (result.modifiedCount === 0) {
+      throw "Clinic not found or no changes made";
+    }
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: "Clinic updated successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
 export default {
   register,
   login,
@@ -293,4 +434,8 @@ export default {
   resetPassword,
   verifyOtp,
   getAllDoctors,
+  deleteDoctor,
+  deleteClinic,
+  updateDoctor,
+  updateClinic,
 };

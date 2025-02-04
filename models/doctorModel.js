@@ -1,82 +1,93 @@
 import mongoose from "mongoose";
 
 const DoctorSchema = mongoose.Schema({
-  doctorName: String,
-  doctorDateOfBirth: String,
-  doctorPhone: String,
-  doctorEmail: String,
-  doctorPassword: String,
-  nationalID: String,
-  Gender: { type: String, enum: ["Male", "Female"] },
+  doctorName: { type: String, required: true },
+  doctorDateOfBirth: { type: String, required: true },
+  doctorPhone: { type: String, required: true },
+  doctorEmail: { type: String, required: true, unique: true },
+  doctorPassword: { type: String, required: true },
+  nationalID: { type: String, required: true, unique: true },
+  Gender: { type: String, enum: ["Male", "Female"], required: true },
   doctorImage: { type: String, default: null },
   field: {
     type: String,
     enum: [
-      "Cardiology", // طب القلب
-      "Dermatology", // طب الجلد
-      "Endocrinology", // طب الغدد الصماء
-      "Gastroenterology", // طب الجهاز الهضمي
-      "Hematology", // طب الدم
-      "Immunology", // علم المناعة
-      "Neurology", // طب الأعصاب
-      "Oncology", // علم الأورام
-      "Orthopedics", // طب العظام
-      "Pediatrics", // طب الأطفال
-      "Pulmonology", // طب الرئة
-      "Radiology", // علم الأشعة
-      "Rheumatology", // طب الروماتيزم
-      "Urology", // طب المسالك البولية
-      "Anesthesiology", // طب التخدير
-      "Emergency Medicine", // طب الطوارئ
-      "Family Medicine", // طب الأسرة
-      "General Surgery", // الجراحة العامة
-      "Infectious Disease", // الأمراض المعدية
-      "Nephrology", // طب الكلى
-      "Obstetrics and Gynecology", // طب النساء والتوليد
-      "Ophthalmology", // طب العيون
-      "Otolaryngology", // طب الأذن والأنف والحنجرة
-      "Pathology", // علم الأمراض
-      "Physical Medicine and Rehabilitation", // الطب الطبيعي وإعادة التأهيل
-      "Plastic Surgery", // جراحة التجميل
-      "Psychiatry", // الطب النفسي
-      "Public Health", // الصحة العامة
-      "Sports Medicine", // طب الرياضة
-      "Thoracic Surgery", // جراحة الصدر
-      "Vascular Surgery", // جراحة الأوعية الدموية
-      "Geriatrics", // طب الشيخوخة
-      "Palliative Care", // الرعاية التلطيفية
-      "Medical Genetics", // علم الوراثة الطبية
-      "Neonatology", // طب حديثي الولادة
-      "Nuclear Medicine", // الطب النووي
-      "Pain Management", // إدارة الألم
-      "Dentistry", // طب الأسنان
-      "Orthodontics", // تقويم الأسنان
-      "Prosthodontics", // تعويضات الأسنان
-      "Endodontics", // علاج جذور الأسنان
-      "Periodontics", // طب اللثة
-      "Oral and Maxillofacial Surgery", // جراحة الفم والوجه والفكين
+      "Cardiology",
+      "Dermatology",
+      "Endocrinology",
+      "Gastroenterology",
+      "Hematology",
+      "Immunology",
+      "Neurology",
+      "Oncology",
+      "Orthopedics",
+      "Pediatrics",
+      "Pulmonology",
+      "Radiology",
+      "Rheumatology",
+      "Urology",
+      "Anesthesiology",
+      "Emergency Medicine",
+      "Family Medicine",
+      "General Surgery",
+      "Infectious Disease",
+      "Nephrology",
+      "Obstetrics and Gynecology",
+      "Ophthalmology",
+      "Otolaryngology",
+      "Pathology",
+      "Physical Medicine and Rehabilitation",
+      "Plastic Surgery",
+      "Psychiatry",
+      "Public Health",
+      "Sports Medicine",
+      "Thoracic Surgery",
+      "Vascular Surgery",
+      "Geriatrics",
+      "Palliative Care",
+      "Medical Genetics",
+      "Neonatology",
+      "Nuclear Medicine",
+      "Pain Management",
+      "Dentistry",
+      "Orthodontics",
+      "Prosthodontics",
+      "Endodontics",
+      "Periodontics",
+      "Oral and Maxillofacial Surgery",
     ],
+    required: true,
   },
   yearsOfExprience: String,
-  syndicateID: String,
-  syndicateCard: { type: String, default: null }, //كارنيه النقابة
+  syndicateID: { type: String, required: true },
+  syndicateCard: { type: String, required: true, default: null },
   certificates: [{ type: String, default: null }],
   clinic: [
     {
       clinicLicense: { type: String, default: null },
-      clinicCity: String,
-      clinicArea: String,
-      clinicAddress: String,
-      clinicPhone: [String],
-      clinicEmail: String,
-      clinicWebsite: String,
-      clinicOpeningHours: [String],
-      clinicWorkDays: [String],
-      clinicLocationLinks: String,
+      clinicCity: { type: String, required: true },
+      clinicArea: { type: String, required: true },
+      clinicAddress: { type: String, required: true },
+      clinicPhone: { type: [String], required: true },
+      clinicEmail: { type: String, required: true },
+      clinicWebsite: { type: String, required: true },
+      clinicWorkDays: [
+        {
+          day: {
+            type: String,
+            enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            required: true,
+          },
+          workingHours: { type: [String], required: true },
+          examinationDuration: { type: Number, required: true },
+        },
+      ],
+      clinicLocationLinks: { type: String, required: true },
+      Price: { type: Number, required: true },
     },
   ],
 });
 
-const doctor = mongoose.model("doctor", DoctorSchema);
+const Doctor = mongoose.model("Doctor", DoctorSchema);
 
-export default doctor;
+export default Doctor;
