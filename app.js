@@ -12,6 +12,7 @@ import medicalRecordRoutes from "./Routes/medicalRecordRoutes.js";
 import doctorRoutes from "./Routes/doctorRoute.js";
 import diagnosisRoute from "./Routes/diagnosisRoute.js";
 import patientRecordRoute from "./Routes/personalRecordRoute.js";
+import bookingRoutes from "./Routes/bookingRoutes.js"
 import accessRecordRoute from "./Routes/accessRecordRoute.js"
 import connectToMongoDB from "./db/connectToMongoDB.js";
 
@@ -42,6 +43,7 @@ app.use("/medical-records", medicalRecordRoutes);
 app.use("/Diagnosis", diagnosisRoute);
 app.use("/doctor", doctorRoutes);
 app.use("/patientRecords", patientRecordRoute);
+app.use("/bookings",bookingRoutes);
 app.use("/access",accessRecordRoute)
 
 const Port = process.env.PORT || 3000;
