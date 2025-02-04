@@ -13,7 +13,7 @@ import doctorRoutes from "./Routes/doctorRoute.js";
 import diagnosisRoute from "./Routes/diagnosisRoute.js";
 import patientRecordRoute from "./Routes/personalRecordRoute.js";
 import bookingRoutes from "./Routes/bookingRoutes.js"
-
+import accessRecordRoute from "./Routes/accessRecordRoute.js"
 import connectToMongoDB from "./db/connectToMongoDB.js";
 
 dotenv.config();
@@ -44,9 +44,12 @@ app.use("/Diagnosis", diagnosisRoute);
 app.use("/doctor", doctorRoutes);
 app.use("/patientRecords", patientRecordRoute);
 app.use("/bookings",bookingRoutes);
+app.use("/access",accessRecordRoute)
 
 const Port = process.env.PORT || 3000;
 app.listen(Port, () => {
   connectToMongoDB();
   console.log(`Listening on port ${Port}`);
 });
+
+//test new branch
