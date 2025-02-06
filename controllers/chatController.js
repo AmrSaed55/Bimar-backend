@@ -1,4 +1,3 @@
-// controllers/chatController.js
 import Message from "../models/chatModel.js";
 import Doctor from "../models/doctorModel.js";
 import Patient from "../models/PatientAuth_Model.js";

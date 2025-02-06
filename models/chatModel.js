@@ -1,4 +1,3 @@
-// models/chatModel.js
 import mongoose from "mongoose";
 
 const messageSchema = mongoose.Schema({

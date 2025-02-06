@@ -77,11 +77,11 @@ io.on("connection", (socket) => {
     try {
       // Access the data directly from the message data
       const newMessage = await Message.create({
-        sender: data.data.senderId,        // Changed from data.senderId
-        senderModel: data.data.senderType, // Changed from data.senderType
-        receiver: data.data.receiverId,    // Changed from data.receiverId
-        receiverModel: data.data.receiverType, // Changed from data.receiverType
-        message: data.data.message         // Changed from data.message
+        sender: data.data.senderId,
+        senderModel: data.data.senderType,
+        receiver: data.data.receiverId,
+        receiverModel: data.data.receiverType,
+        message: data.data.message
       });
 
       io.to(data.data.chatRoom).emit("receive_message", newMessage);
@@ -95,7 +95,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Update the server listen call
 const Port = process.env.PORT || 3000;
 httpServer.listen(Port, () => {
   connectToMongoDB();
