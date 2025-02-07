@@ -273,7 +273,7 @@ const generateAccessLink = async (req, res) => {
 
       <p style="color: #555; font-size: 16px; line-height: 1.6;">
         Share this password only with your trusted healthcare provider. It will
-        expire after 24 hours.
+        expire after ${accessDuration} minutes.
       </p>
     </div>
 
