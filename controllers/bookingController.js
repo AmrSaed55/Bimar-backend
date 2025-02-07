@@ -21,6 +21,10 @@ const createAppointemnt = async (req, res) => {
       throw "Patient not found";
     }
 
+    const patientName = patient.userName;
+    const patientPhone = patient.userPhone;
+    const appointmentDate = new Date(req.body.appointmentDate).toLocaleDateString();
+    const appointmentStartTime = new Date(req.body.appointmentStartTime).toLocaleTimeString();
     const appointmentData = {
       ...req.body,
       patientId: patient._id,
@@ -30,6 +34,9 @@ const createAppointemnt = async (req, res) => {
     if (!doctor) {
       throw "Doctor not found";
     }
+
+    const clinic = doctor.clinic.find(c => c._id.toString() === req.body.clinicId);
+    const clinicAddress = clinic ? clinic.clinicAddress : 'Address not available';
 
     const existingAppointment = await Appointments.findOne({
       doctorId: doctor._id,
@@ -84,7 +91,7 @@ const createAppointemnt = async (req, res) => {
                     <div style="margin: 25px 0;">
                         <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
                             <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${appointmentDate}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${appointmentTime}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${appointmentStartTime}</p>
                             <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${clinicAddress}</p>
                         </div>
                     </div>
@@ -158,7 +165,7 @@ const createAppointemnt = async (req, res) => {
                 <div style="margin: 25px 0;">
                     <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
                         <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${appointmentDate}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${appointmentTime}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${appointmentStartTime}</p>
                         <p style="margin: 5px 0; color: #16423C;"><strong>📞 Contact:</strong> ${patientPhone}</p>
                         <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Email:</strong> ${patientEmail}</p>
                     </div>
