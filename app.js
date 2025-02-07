@@ -83,6 +83,46 @@ io.on("connection", (socket) => {
     }
 
     io.emit("online_users", Object.keys(onlineUsers));
+
+  // Join a chat room
+  socket.on("join_chat", async (data) => {
+    try {
+      // Add validation
+      if (!data || !data.chatRoom || !data.userId || !data.userType) {
+        console.error("Invalid chat room data:", data);
+        return;
+      }
+
+      // Store user info in socket
+      socket.userId = data.userId;
+      socket.userType = data.userType;
+      
+      socket.join(data.chatRoom);
+
+      // Get user details based on type
+      let userName;
+      if (data.userType === 'Doctor') {
+        const doctor = await Doctor.findById(data.userId);
+        userName = doctor?.doctorName;
+      } else {
+        const patient = await Patient.findById(data.userId);
+        userName = patient?.userName;
+      }
+
+      console.log(`User joined room: ${data.chatRoom}`);
+      console.log(`User details: ${userName} (${data.userType})`);
+
+      // Notify room of new user
+      io.to(data.chatRoom).emit('user_joined', {
+        userId: data.userId,
+        userType: data.userType,
+        userName: userName
+      });
+
+    } catch (error) {
+      console.error("Error in join_chat:", error);
+    }
+
   });
 
   // Typing Status
@@ -161,4 +201,6 @@ const Port = process.env.PORT || 3000;
 httpServer.listen(Port, () => {
   connectToMongoDB();
   console.log(`Server running on port ${Port}`);
+});
+
 });
