@@ -25,7 +25,20 @@ const storage = multer.diskStorage({
 
 const docProfile = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads/doc-img");
+    switch(file.fieldname){
+      case 'doctorImage' :
+        cb(null, "./uploads/doc-img")
+        break
+      case 'syndicateCard' :
+        cb(null, "./uploads/syndicateCard")
+        break
+      case 'certificates' :
+        cb(null, "./uploads/certificates")
+        break
+      default:
+        cb(null, "./uploads/clinicLicense")
+    }
+    
   },
 
   filename: (req, file, cb) => {
@@ -60,6 +73,8 @@ const patientProfile = multer.diskStorage({
     cb(null, name);
   },
 });
+
+
 
 const upload = multer({ storage: storage });
 const uploadDocProfile = multer({ storage: docProfile });
