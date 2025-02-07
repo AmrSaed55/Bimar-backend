@@ -23,7 +23,13 @@ const messageSchema = mongoose.Schema({
   },
   message: {
     type: String,
-    required: true
+    required: false
+  },
+  file: {
+    type: [String]
+  },
+  fileType: {
+    type: [String]
   },
   timestamp: {
     type: Date,

@@ -1,6 +1,4 @@
 import Message from "../models/chatModel.js";
-import Doctor from "../models/doctorModel.js";
-import Patient from "../models/PatientAuth_Model.js";
 import errorHandler from "../utilities/errorHandler.js";
 
 const getChatHistory = async (req, res) => {
@@ -10,13 +8,13 @@ const getChatHistory = async (req, res) => {
     const messages = await Message.find({
       $or: [
         { sender: doctorId, receiver: patientId },
-        { sender: patientId, receiver: doctorId }
-      ]
+        { sender: patientId, receiver: doctorId },
+      ],
     }).sort({ timestamp: 1 });
 
     res.status(200).json({
-      status: 'success',
-      data: messages
+      status: "success",
+      data: messages,
     });
   } catch (err) {
     errorHandler(res, err);
@@ -24,5 +22,5 @@ const getChatHistory = async (req, res) => {
 };
 
 export default {
-  getChatHistory
+  getChatHistory,
 };
