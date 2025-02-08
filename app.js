@@ -69,20 +69,33 @@ io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   // User Registration & Auto-Join Rooms
-  socket.on("register", (userId) => {
+  socket.on("register", async (userId) => {
     onlineUsers[userId] = socket.id;
     console.log(`User ${userId} connected.`);
 
-    // User joins all chat rooms with online users
+    // Join rooms and emit online users
     for (const otherUserId in onlineUsers) {
       if (userId !== otherUserId) {
         const room = `${userId}-${otherUserId}`;
         socket.join(room);
-        console.log(`User ${userId} joined room: ${room}`);
       }
     }
-
     io.emit("online_users", Object.keys(onlineUsers));
+
+    // Silently update undelivered messages
+    try {
+      await Message.updateMany(
+        {
+          receiver: userId,
+          status: 'sent'
+        },
+        {
+          $set: { status: 'delivered' }
+        }
+      );
+    } catch (error) {
+      console.error("Error updating message statuses:", error);
+    }
   });
   // Join a chat room
   socket.on("join_chat", async (data) => {
@@ -174,13 +187,24 @@ io.on("connection", (socket) => {
         message: data.data.message || null,
         file: fileUrls,
         fileType: fileTypes,
+        status: onlineUsers[data.data.receiverId] ? 'delivered' : 'sent'
       });
 
-      const room = `${data.data.senderId}-${data.data.receiverId}`
-      socket.join(room)
-      io.to(room).emit("receive_message", newMessage)
+      const room = `${data.data.senderId}-${data.data.receiverId}`;
+      io.to(room).emit("receive_message", newMessage);
     } catch (error) {
-      console.error("Error saving message:", error)
+      console.error("Error saving message:", error);
+      socket.emit("message_failed", { error: "Failed to send message" });
+    }
+  });
+
+  // Message seen handler
+  socket.on("message_seen", async (data) => {
+    try {
+      const { messageId } = data;
+      await Message.findByIdAndUpdate(messageId, { status: 'seen' });
+    } catch (error) {
+      console.error("Error updating message status:", error);
     }
   });
 
