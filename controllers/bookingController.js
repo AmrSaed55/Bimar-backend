@@ -35,8 +35,14 @@ const createAppointemnt = async (req, res) => {
       throw "Doctor not found";
     }
 
+    // Add clinic validation
+    const clinicExists = doctor.clinic.some(c => c._id.toString() === req.body.clinicId);
+    if (!clinicExists) {
+      throw "Invalid clinic ID for this doctor";
+    }
+
     const clinic = doctor.clinic.find(c => c._id.toString() === req.body.clinicId);
-    const clinicAddress = clinic ? clinic.clinicAddress : 'Address not available';
+    const clinicAddress = clinic.clinicAddress;
 
     const existingAppointment = await Appointments.findOne({
       doctorId: doctor._id,

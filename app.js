@@ -83,7 +83,7 @@ io.on("connection", (socket) => {
     }
 
     io.emit("online_users", Object.keys(onlineUsers));
-
+  });
   // Join a chat room
   socket.on("join_chat", async (data) => {
     try {
@@ -203,4 +203,3 @@ httpServer.listen(Port, () => {
   console.log(`Server running on port ${Port}`);
 });
 
-});
