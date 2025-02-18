@@ -64,138 +64,138 @@ app.use("/chat", chatRoutes);
 
 const onlineUsers = {}
 
-// Socket.IO Connection Handling
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+// // Socket.IO Connection Handling
+// io.on("connection", (socket) => {
+//   console.log("User connected:", socket.id);
 
-  // User Registration & Auto-Join Rooms
-  socket.on("register", (userId) => {
-    onlineUsers[userId] = socket.id;
-    console.log(`User ${userId} connected.`);
+//   // User Registration & Auto-Join Rooms
+//   socket.on("register", (userId) => {
+//     onlineUsers[userId] = socket.id;
+//     console.log(`User ${userId} connected.`);
 
-    // User joins all chat rooms with online users
-    for (const otherUserId in onlineUsers) {
-      if (userId !== otherUserId) {
-        const room = `${userId}-${otherUserId}`;
-        socket.join(room);
-        console.log(`User ${userId} joined room: ${room}`);
-      }
-    }
+//     // User joins all chat rooms with online users
+//     for (const otherUserId in onlineUsers) {
+//       if (userId !== otherUserId) {
+//         const room = `${userId}-${otherUserId}`;
+//         socket.join(room);
+//         console.log(`User ${userId} joined room: ${room}`);
+//       }
+//     }
 
-    io.emit("online_users", Object.keys(onlineUsers));
-  });
-  // Join a chat room
-  socket.on("join_chat", async (data) => {
-    try {
-      // Add validation
-      if (!data || !data.chatRoom || !data.userId || !data.userType) {
-        console.error("Invalid chat room data:", data);
-        return;
-      }
+//     io.emit("online_users", Object.keys(onlineUsers));
+//   });
+//   // Join a chat room
+//   socket.on("join_chat", async (data) => {
+//     try {
+//       // Add validation
+//       if (!data || !data.chatRoom || !data.userId || !data.userType) {
+//         console.error("Invalid chat room data:", data);
+//         return;
+//       }
 
-      // Store user info in socket
-      socket.userId = data.userId;
-      socket.userType = data.userType;
+//       // Store user info in socket
+//       socket.userId = data.userId;
+//       socket.userType = data.userType;
       
-      socket.join(data.chatRoom);
+//       socket.join(data.chatRoom);
 
-      // Get user details based on type
-      let userName;
-      if (data.userType === 'Doctor') {
-        const doctor = await Doctor.findById(data.userId);
-        userName = doctor?.doctorName;
-      } else {
-        const patient = await Patient.findById(data.userId);
-        userName = patient?.userName;
-      }
+//       // Get user details based on type
+//       let userName;
+//       if (data.userType === 'Doctor') {
+//         const doctor = await Doctor.findById(data.userId);
+//         userName = doctor?.doctorName;
+//       } else {
+//         const patient = await Patient.findById(data.userId);
+//         userName = patient?.userName;
+//       }
 
-      console.log(`User joined room: ${data.chatRoom}`);
-      console.log(`User details: ${userName} (${data.userType})`);
+//       console.log(`User joined room: ${data.chatRoom}`);
+//       console.log(`User details: ${userName} (${data.userType})`);
 
-      // Notify room of new user
-      io.to(data.chatRoom).emit('user_joined', {
-        userId: data.userId,
-        userType: data.userType,
-        userName: userName
-      });
+//       // Notify room of new user
+//       io.to(data.chatRoom).emit('user_joined', {
+//         userId: data.userId,
+//         userType: data.userType,
+//         userName: userName
+//       });
 
-    } catch (error) {
-      console.error("Error in join_chat:", error);
-    }
+//     } catch (error) {
+//       console.error("Error in join_chat:", error);
+//     }
 
-  });
+//   });
 
-  // Typing Status
-  socket.on("typing", (data) => {
-    const room = `${data.senderId}-${data.receiverId}`;
-    socket.to(room).emit("user_typing", { userId: data.senderId });
-  });
+//   // Typing Status
+//   socket.on("typing", (data) => {
+//     const room = `${data.senderId}-${data.receiverId}`;
+//     socket.to(room).emit("user_typing", { userId: data.senderId });
+//   });
 
-  socket.on("stop_typing", (data) => {
-    const room = `${data.senderId}-${data.receiverId}`;
-    socket.to(room).emit("user_stop_typing", { userId: data.senderId });
-  });
+//   socket.on("stop_typing", (data) => {
+//     const room = `${data.senderId}-${data.receiverId}`;
+//     socket.to(room).emit("user_stop_typing", { userId: data.senderId });
+//   });
 
-  // Send Message With File Handling
-  socket.on("send_message", async (data) => {
-    try {
-      let fileUrls = []
-      let fileTypes = []
+//   // Send Message With File Handling
+//   socket.on("send_message", async (data) => {
+//     try {
+//       let fileUrls = []
+//       let fileTypes = []
 
-      const uploadPath = path.join(__dirname, 'uploads', 'chat')
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true })
-      }
+//       const uploadPath = path.join(__dirname, 'uploads', 'chat')
+//       if (!fs.existsSync(uploadPath)) {
+//         fs.mkdirSync(uploadPath, { recursive: true })
+//       }
 
-      if (Array.isArray(data.data.files) && data.data.files.length > 0) {
-        data.data.files.forEach((file) => {
-          if (file && file.filename && file.fileData) {
-            const fileType = mime.getType(file.filename);
-            fileTypes.push(fileType);
+//       if (Array.isArray(data.data.files) && data.data.files.length > 0) {
+//         data.data.files.forEach((file) => {
+//           if (file && file.filename && file.fileData) {
+//             const fileType = mime.getType(file.filename);
+//             fileTypes.push(fileType);
 
-            // Clean Base64 prefix if exists
-            const base64Data = file.fileData.replace(/^data:\w+\/\w+;base64,/, "");
+//             // Clean Base64 prefix if exists
+//             const base64Data = file.fileData.replace(/^data:\w+\/\w+;base64,/, "");
 
-            const filePath = path.join(uploadPath, file.filename);
-            fs.writeFileSync(filePath, base64Data, "base64");
+//             const filePath = path.join(uploadPath, file.filename);
+//             fs.writeFileSync(filePath, base64Data, "base64");
 
-            fileUrls.push(`uploads/chat/${file.filename}`);
-          } else {
-            console.error("Invalid file data:", file);
-          }
-        });
-      }
+//             fileUrls.push(`uploads/chat/${file.filename}`);
+//           } else {
+//             console.error("Invalid file data:", file);
+//           }
+//         });
+//       }
 
-      const newMessage = await Message.create({
-        sender: data.data.senderId,
-        senderModel: data.data.senderType,
-        receiver: data.data.receiverId,
-        receiverModel: data.data.receiverType,
-        message: data.data.message || null,
-        file: fileUrls,
-        fileType: fileTypes,
-      });
+//       const newMessage = await Message.create({
+//         sender: data.data.senderId,
+//         senderModel: data.data.senderType,
+//         receiver: data.data.receiverId,
+//         receiverModel: data.data.receiverType,
+//         message: data.data.message || null,
+//         file: fileUrls,
+//         fileType: fileTypes,
+//       });
 
-      const room = `${data.data.senderId}-${data.data.receiverId}`
-      socket.join(room)
-      io.to(room).emit("receive_message", newMessage)
-    } catch (error) {
-      console.error("Error saving message:", error)
-    }
-  });
+//       const room = `${data.data.senderId}-${data.data.receiverId}`
+//       socket.join(room)
+//       io.to(room).emit("receive_message", newMessage)
+//     } catch (error) {
+//       console.error("Error saving message:", error)
+//     }
+//   });
 
-  // Handle User Disconnect
-  socket.on("disconnect", () => {
-    for (const userId in onlineUsers) {
-      if (onlineUsers[userId] === socket.id) {
-        delete onlineUsers[userId];
-        break;
-      }
-    }
-    io.emit("online_users", Object.keys(onlineUsers));
-    console.log("User disconnected:", socket.id);
-  });
-});
+//   // Handle User Disconnect
+//   socket.on("disconnect", () => {
+//     for (const userId in onlineUsers) {
+//       if (onlineUsers[userId] === socket.id) {
+//         delete onlineUsers[userId];
+//         break;
+//       }
+//     }
+//     io.emit("online_users", Object.keys(onlineUsers));
+//     console.log("User disconnected:", socket.id);
+//   });
+// });
 
 const Port = process.env.PORT || 3000;
 httpServer.listen(Port, () => {
