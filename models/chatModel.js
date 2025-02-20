@@ -1,40 +1,40 @@
 import mongoose from "mongoose";
 
 const messageSchema = mongoose.Schema({
-  sender: { 
+  sender: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    refPath: 'senderModel'
+    refPath: "senderModel",
   },
   senderModel: {
     type: String,
     required: true,
-    enum: ['Doctor', 'Patient']
+    enum: ["Doctor", "Patient"],
   },
   receiver: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    refPath: 'receiverModel'
+    refPath: "receiverModel",
   },
   receiverModel: {
     type: String,
     required: true,
-    enum: ['Doctor', 'Patient']
+    enum: ["Doctor", "Patient"],
   },
   message: {
     type: String,
-    required: false
+    required: false,
   },
   file: {
-    type: [String]
+    type: [String],
   },
   fileType: {
-    type: [String]
+    type: [String],
   },
   timestamp: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 const Message = mongoose.model("Message", messageSchema);

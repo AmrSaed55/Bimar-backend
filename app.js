@@ -1,5 +1,5 @@
 import express from "express";
-import mime from 'mime';
+import mime from "mime";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -20,6 +20,7 @@ import bookingRoutes from "./Routes/bookingRoutes.js";
 import accessRecordRoute from "./Routes/accessRecordRoute.js";
 import chatRoutes from "./Routes/chatRoutes.js";
 import connectToMongoDB from "./db/connectToMongoDB.js";
+import aiRoutes from "./Routes/aiRoute.js";
 
 dotenv.config();
 
@@ -30,9 +31,9 @@ const io = new Server(httpServer, {
     origin: ["http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true,
-    allowedHeaders: ["Content-Type"]
+    allowedHeaders: ["Content-Type"],
   },
-  transports: ['websocket', 'polling']
+  transports: ["websocket", "polling"],
 });
 
 // Resolve __dirname for ES modules
@@ -61,8 +62,9 @@ app.use("/patientRecords", patientRecordRoute);
 app.use("/bookings", bookingRoutes);
 app.use("/access", accessRecordRoute);
 app.use("/chat", chatRoutes);
+app.use("/ai", aiRoutes);
 
-const onlineUsers = {}
+const onlineUsers = {};
 
 // Socket.IO Connection Handling
 io.on("connection", (socket) => {
@@ -96,12 +98,12 @@ io.on("connection", (socket) => {
       // Store user info in socket
       socket.userId = data.userId;
       socket.userType = data.userType;
-      
+
       socket.join(data.chatRoom);
 
       // Get user details based on type
       let userName;
-      if (data.userType === 'Doctor') {
+      if (data.userType === "Doctor") {
         const doctor = await Doctor.findById(data.userId);
         userName = doctor?.doctorName;
       } else {
@@ -113,16 +115,14 @@ io.on("connection", (socket) => {
       console.log(`User details: ${userName} (${data.userType})`);
 
       // Notify room of new user
-      io.to(data.chatRoom).emit('user_joined', {
+      io.to(data.chatRoom).emit("user_joined", {
         userId: data.userId,
         userType: data.userType,
-        userName: userName
+        userName: userName,
       });
-
     } catch (error) {
       console.error("Error in join_chat:", error);
     }
-
   });
 
   // Typing Status
@@ -139,12 +139,12 @@ io.on("connection", (socket) => {
   // Send Message With File Handling
   socket.on("send_message", async (data) => {
     try {
-      let fileUrls = []
-      let fileTypes = []
+      let fileUrls = [];
+      let fileTypes = [];
 
-      const uploadPath = path.join(__dirname, 'uploads', 'chat')
+      const uploadPath = path.join(__dirname, "uploads", "chat");
       if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true })
+        fs.mkdirSync(uploadPath, { recursive: true });
       }
 
       if (Array.isArray(data.data.files) && data.data.files.length > 0) {
@@ -154,7 +154,10 @@ io.on("connection", (socket) => {
             fileTypes.push(fileType);
 
             // Clean Base64 prefix if exists
-            const base64Data = file.fileData.replace(/^data:\w+\/\w+;base64,/, "");
+            const base64Data = file.fileData.replace(
+              /^data:\w+\/\w+;base64,/,
+              ""
+            );
 
             const filePath = path.join(uploadPath, file.filename);
             fs.writeFileSync(filePath, base64Data, "base64");
@@ -176,11 +179,11 @@ io.on("connection", (socket) => {
         fileType: fileTypes,
       });
 
-      const room = `${data.data.senderId}-${data.data.receiverId}`
-      socket.join(room)
-      io.to(room).emit("receive_message", newMessage)
+      const room = `${data.data.senderId}-${data.data.receiverId}`;
+      socket.join(room);
+      io.to(room).emit("receive_message", newMessage);
     } catch (error) {
-      console.error("Error saving message:", error)
+      console.error("Error saving message:", error);
     }
   });
 
@@ -202,4 +205,3 @@ httpServer.listen(Port, () => {
   connectToMongoDB();
   console.log(`Server running on port ${Port}`);
 });
-

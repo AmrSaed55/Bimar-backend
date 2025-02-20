@@ -19,7 +19,9 @@
   "homepage": "https://github.com/3bdalrahman/Bimar-backend#readme",
   "description": "",
   "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
     "ajv": "^8.17.1",
+    "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "bimar": "file:",
     "cookie-parser": "^1.4.7",
