@@ -19,6 +19,8 @@ router.patch(
   upload.uploadPatientProfile.single("profileImage"),
   PatinetAuthController.updateProfilePicture
 );
-router.get("/patients/:id", PatinetAuthController.getPatientById);
+router.get("/patients/:id", PatinetAuthController.getPatientById)
+router.patch("/updateFcmToken",PatinetAuthController.updateFcm)
+router.patch('/:id',PatinetAuthController.UpdatePatient)
 
-export default router;
+export default router

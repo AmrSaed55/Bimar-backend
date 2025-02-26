@@ -320,12 +320,34 @@ const getPatientById = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching patient data:", error);
-    res.status(500).json({
-      status: "FAILURE",
-      message: "An error occurred while fetching patient data",
-    });
+    errorHandler(res,error)
   }
 };
+
+const UpdatePatient = async(req,res)=>{
+  let id = req.params.id
+  let UpdatePatientData = req.body
+  let update = await Patient.updateOne({_id : id},UpdatePatientData)
+  res.json(update ? {data :'Updated Successfulyy'} : {data : 'Something wend Wrong'})
+}
+
+// API to update FCM token for a patient
+const updateFcm = async (req, res) => {
+  try {
+    const { patientId, fcmToken } = req.body;
+
+  if (!patientId || !fcmToken) {
+    throw "Patient ID and FCM token are required" 
+  }
+
+    await Patient.findByIdAndUpdate(patientId, { fcmToken });
+    res.status(200).json({ data: "FCM token updated successfully" });
+  } catch (error) {
+    console.log(error)
+    errorHandler(res,error)
+  }
+}
+
 
 export default {
   register,
@@ -335,4 +357,6 @@ export default {
   verifyotp,
   updateProfilePicture,
   getPatientById,
-};
+  updateFcm,
+  UpdatePatient
+}

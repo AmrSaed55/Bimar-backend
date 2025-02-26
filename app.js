@@ -20,7 +20,11 @@ import bookingRoutes from "./Routes/bookingRoutes.js";
 import accessRecordRoute from "./Routes/accessRecordRoute.js";
 import chatRoutes from "./Routes/chatRoutes.js";
 import connectToMongoDB from "./db/connectToMongoDB.js";
+
+import {scheduleReminders} from "./controllers/automaticMedicineAlert.js"
+
 import aiRoutes from "./Routes/aiRoute.js";
+
 
 dotenv.config();
 
@@ -205,3 +209,8 @@ httpServer.listen(Port, () => {
   connectToMongoDB();
   console.log(`Server running on port ${Port}`);
 });
+
+
+scheduleReminders()
+
+
