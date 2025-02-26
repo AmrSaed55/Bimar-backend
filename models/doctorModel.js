@@ -12,49 +12,25 @@ const DoctorSchema = mongoose.Schema({
   field: {
     type: String,
     enum: [
-      "Cardiology",
-      "Dermatology",
-      "Endocrinology",
-      "Gastroenterology",
-      "Hematology",
-      "Immunology",
-      "Neurology",
-      "Oncology",
-      "Orthopedics",
-      "Pediatrics",
-      "Pulmonology",
-      "Radiology",
-      "Rheumatology",
-      "Urology",
-      "Anesthesiology",
-      "Emergency Medicine",
-      "Family Medicine",
-      "General Surgery",
-      "Infectious Disease",
-      "Nephrology",
-      "Obstetrics and Gynecology",
-      "Ophthalmology",
-      "Otolaryngology",
-      "Pathology",
-      "Physical Medicine and Rehabilitation",
-      "Plastic Surgery",
-      "Psychiatry",
-      "Public Health",
-      "Sports Medicine",
-      "Thoracic Surgery",
-      "Vascular Surgery",
-      "Geriatrics",
-      "Palliative Care",
-      "Medical Genetics",
-      "Neonatology",
-      "Nuclear Medicine",
-      "Pain Management",
-      "Dentistry",
-      "Orthodontics",
-      "Prosthodontics",
-      "Endodontics",
-      "Periodontics",
-      "Oral and Maxillofacial Surgery",
+      // Doctor Specialists
+      "Allergist", // أخصائي الحساسية
+      "Cardiologist", // أخصائي القلب
+      "Dermatologist", // أخصائي الجلدية
+      "Endocrinologist", // أخصائي الغدد الصماء
+      "Gastroenterologist", // أخصائي الجهاز الهضمي
+      "Gynecologist", // أخصائي النساء والتوليد
+      "Hepatologist", // أخصائي الكبد
+      "Internal Medicine", // الطب الباطني
+      "Neurologist", // أخصائي الأعصاب
+      "Otolaryngologist", // أخصائي الأنف والأذن والحنجرة
+      "Pediatrician", // طبيب الأطفال
+      "Phlebologist", // أخصائي الأوردة
+      "Pulmonologist", // أخصائي الرئة
+      "Rheumatologist", // أخصائي الروماتيزم
+      "Physical Medicine and Rehabilitation", // الطب الطبيعي وإعادة التأهيل
+      "Dentistry", // طب الأسنان
+      "Psychiatry", // الطب النفسي
+      "Plastic Surgery", // الجراحة التجميلية
     ],
     required: true,
   },
@@ -75,7 +51,15 @@ const DoctorSchema = mongoose.Schema({
         {
           day: {
             type: String,
-            enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            enum: [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+            ],
             required: true,
           },
           workingHours: { type: [String], required: true },

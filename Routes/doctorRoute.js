@@ -1,6 +1,6 @@
 import express from 'express';
 import doctorController from '../controllers/doctorController.js';
-import doctorValidation from '../validation/doctorValid.js';
+// import doctorValidation from '../validation/doctorValid.js';
 import uploadProfile from './../utilities/imagUpload.js';
 
 const router = express.Router();
@@ -9,7 +9,7 @@ router
   .route("/doctorRegister")
   .post(
     uploadProfile.uploadDocProfile.any(),
-    doctorValidation(),
+    // doctorValidation(),
     doctorController.register
   );
 

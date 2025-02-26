@@ -13,14 +13,22 @@ const register = async (req, res) => {
 
     if (req.files) {
       // Assign doctorImage and syndicateCard
-      newDoctorData.doctorImage = req.files.find(file => file.fieldname === 'doctorImage')?.path || null;
-      newDoctorData.syndicateCard = req.files.find(file => file.fieldname === 'syndicateCard')?.path || null;
-      newDoctorData.certificates = req.files.filter(file => file.fieldname === 'certificates').map(file => file.path);
+      newDoctorData.doctorImage =
+        req.files.find((file) => file.fieldname === "doctorImage")?.path ||
+        null;
+      newDoctorData.syndicateCard =
+        req.files.find((file) => file.fieldname === "syndicateCard")?.path ||
+        null;
+      newDoctorData.certificates = req.files
+        .filter((file) => file.fieldname === "certificates")
+        .map((file) => file.path);
 
       // Process clinicLicense inside the clinic array
       if (Array.isArray(newDoctorData.clinic)) {
         newDoctorData.clinic = newDoctorData.clinic.map((clinic, index) => {
-          const clinicLicenseFile = req.files.find(file => file.fieldname === `clinic[${index}][clinicLicense]`);
+          const clinicLicenseFile = req.files.find(
+            (file) => file.fieldname === `clinic[${index}][clinicLicense]`
+          );
           return {
             ...clinic,
             clinicLicense: clinicLicenseFile ? clinicLicenseFile.path : null,
@@ -28,12 +36,11 @@ const register = async (req, res) => {
         });
       }
     }
-    
+
     let validationError = validationResult(req);
     if (!validationError.isEmpty()) {
       throw validationError;
     }
-
 
     let hashedPassword = await bcrypt.hash(newDoctorData.doctorPassword, 6);
     let addDoctor = await doctor.create({
@@ -100,30 +107,17 @@ const login = async (req, res) => {
       throw "Wrong Password";
     }
 
-    const doctorData = {
-      doctorName: getDoctor.doctorName,
-      doctorPhone: getDoctor.doctorPhone,
-      doctorEmail: getDoctor.doctorEmail,
-      Gender: getDoctor.Gender,
-      field: getDoctor.field,
-    };
+    const doctorData = getDoctor;
 
     let token = jwt.sign(
       { email: credentials.doctorEmail },
       process.env.JWT_KEY
     );
-    res
-      .status(200)
-      .cookie("jwt", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      })
-      .json({
-        status: responseMsgs.SUCCESS,
-        data: "Logged In Successfully",
-        doctor: doctorData,
-      });
+    res.status(200).cookie("jwt", token).json({
+      status: responseMsgs.SUCCESS,
+      data: "Logged In Successfully",
+      doctor: doctorData,
+    });
   } catch (er) {
     console.log(er);
     errorHandler(res, er);
@@ -353,20 +347,24 @@ const updateDoctor = async (req, res) => {
 
     // Check for each field and add it to updateData if it exists in the request body
     if (req.body.doctorName) updateData.doctorName = req.body.doctorName;
-    if (req.body.doctorDateOfBirth) updateData.doctorDateOfBirth = req.body.doctorDateOfBirth;
+    if (req.body.doctorDateOfBirth)
+      updateData.doctorDateOfBirth = req.body.doctorDateOfBirth;
     if (req.body.doctorPhone) updateData.doctorPhone = req.body.doctorPhone;
     if (req.body.doctorEmail) updateData.doctorEmail = req.body.doctorEmail;
 
     // Do not allow changes to the following fields
     // Commented out to prevent updates
-    // if (req.body.nationalID) updateData.nationalID = req.body.nationalID; 
-    // if (req.body.field) updateData.field = req.body.field; 
-    // if (req.body.syndicateID) updateData.syndicateID = req.body.syndicateID; 
-    // if (req.body.syndicateCard) updateData.syndicateCard = req.body.syndicateCard; 
-    // if (req.body.certificates) updateData.certificates = req.body.certificates; 
+    // if (req.body.nationalID) updateData.nationalID = req.body.nationalID;
+    // if (req.body.field) updateData.field = req.body.field;
+    // if (req.body.syndicateID) updateData.syndicateID = req.body.syndicateID;
+    // if (req.body.syndicateCard) updateData.syndicateCard = req.body.syndicateCard;
+    // if (req.body.certificates) updateData.certificates = req.body.certificates;
 
     // Update the doctor in the database
-    const result = await doctor.updateOne({ doctorEmail: email }, { $set: updateData });
+    const result = await doctor.updateOne(
+      { doctorEmail: email },
+      { $set: updateData }
+    );
 
     if (result.modifiedCount === 0) {
       throw "Doctor not found or no changes made";
@@ -394,13 +392,21 @@ const updateClinic = async (req, res) => {
     const updateData = {};
 
     // Check for each field in clinicData and add it to updateData if it exists
-    if (clinicData.clinicCity) updateData["clinic.$.clinicCity"] = clinicData.clinicCity;
-    if (clinicData.clinicArea) updateData["clinic.$.clinicArea"] = clinicData.clinicArea;
-    if (clinicData.clinicAddress) updateData["clinic.$.clinicAddress"] = clinicData.clinicAddress;
-    if (clinicData.clinicPhone) updateData["clinic.$.clinicPhone"] = clinicData.clinicPhone;
-    if (clinicData.clinicEmail) updateData["clinic.$.clinicEmail"] = clinicData.clinicEmail;
-    if (clinicData.clinicWebsite) updateData["clinic.$.clinicWebsite"] = clinicData.clinicWebsite;
-    if (clinicData.clinicLocationLinks) updateData["clinic.$.clinicLocationLinks"] = clinicData.clinicLocationLinks;
+    if (clinicData.clinicCity)
+      updateData["clinic.$.clinicCity"] = clinicData.clinicCity;
+    if (clinicData.clinicArea)
+      updateData["clinic.$.clinicArea"] = clinicData.clinicArea;
+    if (clinicData.clinicAddress)
+      updateData["clinic.$.clinicAddress"] = clinicData.clinicAddress;
+    if (clinicData.clinicPhone)
+      updateData["clinic.$.clinicPhone"] = clinicData.clinicPhone;
+    if (clinicData.clinicEmail)
+      updateData["clinic.$.clinicEmail"] = clinicData.clinicEmail;
+    if (clinicData.clinicWebsite)
+      updateData["clinic.$.clinicWebsite"] = clinicData.clinicWebsite;
+    if (clinicData.clinicLocationLinks)
+      updateData["clinic.$.clinicLocationLinks"] =
+        clinicData.clinicLocationLinks;
     if (clinicData.Price) updateData["clinic.$.Price"] = clinicData.Price;
 
     // Do not allow changes to the following fields
