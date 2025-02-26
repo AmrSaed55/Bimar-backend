@@ -77,109 +77,109 @@ import User from "../models/PatientAuth_Model.js";
     body("personalRecords.DateOfBirth")
       .notEmpty()
       .withMessage("DateOfBirth cant be Empty"),
-    body("personalRecords.emergencyContact")
-      .notEmpty()
-      .withMessage("emergencyContact cant be Empty")
-      .isMobilePhone("any")
-      .withMessage("emergencyContact Format invalid")
-      .custom((value, { req }) => {
-        if (value === req.body.userPhone) {
-          throw new Error("emergencyContact cannot be the same as userPhone");
-        }
-        return true;
-      }),
-    body("personalRecords.workName")
-      .notEmpty()
-      .withMessage("workName cant be Empty"),
-    body("personalRecords.workPlace")
-      .notEmpty()
-      .withMessage("worPlace cant be Empty"),
-    body("personalRecords.childrenNumber")
-      .notEmpty()
-      .withMessage("childrenNumber cant be Empty"),
-    body("personalRecords.birthDateOfFirstChild").custom((value, { req }) => {
-      if (req.body.personalRecords.childrenNumber == "0" && value) {
-        throw new Error(
-          "birthDateOfFirstChild cannot exist if there are no children"
-        );
-      }
-      return true;
-    }),
-    body("personalRecords.smoking")
-      .notEmpty()
-      .withMessage("smoking cant be Empty")
-      .isIn(["Yes", "No", "Former smoker"])
-      .withMessage(
-        "invalid smoking answer it should be Yes or No or Former smoker"
-      ),
-    body("personalRecords.alcohol")
-      .notEmpty()
-      .withMessage("alcohol cant be Empty"),
-    body("personalRecords.wifesNumber").custom((value, { req }) => {
-      if (req.body.personalRecords.Gender === "Female") {
-        if (value) {
-          throw "wifesNumber should not exist if Gender is female";
-        }
-      } else {
-        if (value === undefined || value === null) {
-          throw "wifesNumber cant be Empty";
-        }
-        if (
-          ["Married"].includes(req.body.personalRecords.familyStatus) &&
-          value === 0
-        ) {
-          throw "wifesNumber cannot be zero if family status is Married";
-        }
-        if (
-          ["Single", "Divorced", "Widowed"].includes(
-            req.body.personalRecords.familyStatus
-          ) &&
-          value != 0
-        ) {
-          throw "WifesNumber should be zero";
-        }
-      }
-      return true;
-    }),
-    body("personalRecords.petsTypes")
-      .isArray()
-      .withMessage("petsTypes cant be Empty"),
-    body("personalRecords.familyStatus")
-      .notEmpty()
-      .withMessage("familyStatus cant be Empty")
-      .isIn(["Single", "Married", "Divorced", "Widowed"])
-      .withMessage(
-        "it should be one of Single or Married or Divorced or Widowed"
-      ),
+    // body("personalRecords.emergencyContact")
+    //   .notEmpty()
+    //   .withMessage("emergencyContact cant be Empty")
+    //   .isMobilePhone("any")
+    //   .withMessage("emergencyContact Format invalid")
+    //   .custom((value, { req }) => {
+    //     if (value === req.body.userPhone) {
+    //       throw new Error("emergencyContact cannot be the same as userPhone");
+    //     }
+    //     return true;
+      // }),
+    // body("personalRecords.workName")
+    //   .notEmpty()
+    //   .withMessage("workName cant be Empty"),
+    // body("personalRecords.workPlace")
+    //   .notEmpty()
+    //   .withMessage("worPlace cant be Empty"),
+    // body("personalRecords.childrenNumber")
+    //   .notEmpty()
+    //   .withMessage("childrenNumber cant be Empty"),
+    // body("personalRecords.birthDateOfFirstChild").custom((value, { req }) => {
+    //   if (req.body.personalRecords.childrenNumber == "0" && value) {
+    //     throw new Error(
+    //       "birthDateOfFirstChild cannot exist if there are no children"
+    //     );
+    //   }
+    //   return true;
+    // }),
+    // body("personalRecords.smoking")
+    //   .notEmpty()
+    //   .withMessage("smoking cant be Empty")
+    //   .isIn(["Yes", "No", "Former smoker"])
+    //   .withMessage(
+    //     "invalid smoking answer it should be Yes or No or Former smoker"
+    //   ),
+    // body("personalRecords.alcohol")
+    //   .notEmpty()
+    //   .withMessage("alcohol cant be Empty"),
+    // body("personalRecords.wifesNumber").custom((value, { req }) => {
+    //   if (req.body.personalRecords.Gender === "Female") {
+    //     if (value) {
+    //       throw "wifesNumber should not exist if Gender is female";
+    //     }
+    //   } else {
+    //     if (value === undefined || value === null) {
+    //       throw "wifesNumber cant be Empty";
+    //     }
+    //     if (
+    //       ["Married"].includes(req.body.personalRecords.familyStatus) &&
+    //       value === 0
+    //     ) {
+    //       throw "wifesNumber cannot be zero if family status is Married";
+    //     }
+    //     if (
+    //       ["Single", "Divorced", "Widowed"].includes(
+    //         req.body.personalRecords.familyStatus
+    //       ) &&
+    //       value != 0
+    //     ) {
+    //       throw "WifesNumber should be zero";
+    //     }
+    //   }
+    //   return true;
+    // }),
+    // body("personalRecords.petsTypes")
+    //   .isArray()
+    //   .withMessage("petsTypes cant be Empty"),
+    // body("personalRecords.familyStatus")
+    //   .notEmpty()
+    //   .withMessage("familyStatus cant be Empty")
+    //   .isIn(["Single", "Married", "Divorced", "Widowed"])
+    //   .withMessage(
+    //     "it should be one of Single or Married or Divorced or Widowed"
+    //   ),
   ];
 };
  const medicalRecordValidation = () => {
   return [
-    body("allgeric").notEmpty().withMessage("Allergic field cannot be empty"),
-    body("chronicMedications")
-      .notEmpty()
-      .withMessage("Chronic Medications field cannot be empty"),
-    body("surgeries").notEmpty().withMessage("Surgeries field cannot be empty"),
-    body("chronicDiseases")
-      .notEmpty()
-      .withMessage("Chronic Diseases field cannot be empty"),
-    body("immunizations")
-      .notEmpty()
-      .withMessage("Immunizations field cannot be empty"),
-    body("vaccinations")
-      .notEmpty()
-      .withMessage("Vaccinations field cannot be empty"),
+    // body("allgeric").notEmpty().withMessage("Allergic field cannot be empty"),
+    // body("chronicMedications")
+    //   .notEmpty()
+    //   .withMessage("Chronic Medications field cannot be empty"),
+    // body("surgeries").notEmpty().withMessage("Surgeries field cannot be empty"),
+    // body("chronicDiseases")
+    //   .notEmpty()
+    //   .withMessage("Chronic Diseases field cannot be empty"),
+    // body("immunizations")
+    //   .notEmpty()
+    //   .withMessage("Immunizations field cannot be empty"),
+    // body("vaccinations")
+    //   .notEmpty()
+    //   .withMessage("Vaccinations field cannot be empty"),
     body("bloodType")
       .notEmpty()
       .withMessage("Blood Type cannot be empty")
       .isIn(["AB+", "A+", "B+", "O+", "AB-", "A-", "B-", "O-"])
       .withMessage("Invalid blood type"),
-    body("familyHistory.genatics")
-      .isArray()
-      .withMessage("Family history genetics must be an array"),
-    body("familyHistory.genaticsDiseases")
-      .isArray()
-      .withMessage("Family history genetic diseases must be an array"),
+    // body("familyHistory.genatics")
+    //   .isArray()
+    //   .withMessage("Family history genetics must be an array"),
+    // body("familyHistory.genaticsDiseases")
+    //   .isArray()
+    //   .withMessage("Family history genetic diseases must be an array"),
   ];
 };
 
