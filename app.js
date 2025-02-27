@@ -21,6 +21,8 @@ import accessRecordRoute from "./Routes/accessRecordRoute.js";
 import chatRoutes from "./Routes/chatRoutes.js";
 import connectToMongoDB from "./db/connectToMongoDB.js";
 import aiRoutes from "./Routes/aiRoute.js";
+import appointmentAnalytics from "./Routes/appointmentAnalyticsRoute.js";
+import symptoms from "./Routes/symptomRoutes.js";
 
 dotenv.config();
 
@@ -63,6 +65,8 @@ app.use("/bookings", bookingRoutes);
 app.use("/access", accessRecordRoute);
 app.use("/chat", chatRoutes);
 app.use("/ai", aiRoutes);
+app.use("/symptoms", symptoms);
+app.use("/analytics", appointmentAnalytics);
 
 const onlineUsers = {};
 
