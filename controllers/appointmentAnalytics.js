@@ -9,27 +9,12 @@ const getAnalytics = async (doctorId, startDate = null, endDate = null) => {
   }
 
   const pipeline = [
-    { $match: matchStage },
-    {
-      $lookup: {
-        from: "doctors",
-        localField: "doctorId",
-        foreignField: "_id",
-        as: "doctor",
-      },
-    },
-    { $unwind: "$doctor" },
-    { $unwind: "$doctor.clinic" },
-    {
-      $match: {
-        $expr: { $eq: ["$doctor.clinic._id", "$clinicId"] },
-      },
-    },
+    { $match: matchStage }, // Match appointments for the doctor and date range
     {
       $group: {
         _id: null,
-        totalPatients: { $sum: 1 },
-        totalMoney: { $sum: "$doctor.clinic.Price" },
+        totalPatients: { $sum: 1 }, // Count total patients
+        totalMoney: { $sum: "$Price" }, // Sum the Price field from Appointments
       },
     },
   ];
