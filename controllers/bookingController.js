@@ -82,38 +82,31 @@ const createAppointemnt = async (req, res) => {
       html: `
         <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
             <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
+
+                <!-- Header Section -->
                 <div style="background-color: #16423C; padding: 30px; text-align: center;">
                     <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">✅ Appointment Confirmed</h1>
                 </div>
+
+                <!-- Content Section -->
                 <div style="padding: 30px;">
-                    <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, ${
-                      patient.userName
-                    } 👋</h2>
+                    <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, ${patientName} 👋</h2>
                     <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                        Your appointment with <strong>Dr. ${
-                          doctor.doctorName
-                        }</strong> has been successfully booked!
+                        Your appointment with <strong>Dr. ${doctor.doctorName}</strong> has been successfully booked!
                     </p>
                     <div style="margin: 25px 0;">
                         <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                            <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(
-                              appointmentDate
-                            ).toLocaleDateString()}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${new Date(
-                              appointmentStartTime
-                            ).toLocaleTimeString()} - ${new Date(
-        appointmentEndTime
-      ).toLocaleTimeString()}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${
-                              clinic.clinicAddress
-                            }</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>💰 Price:</strong> ${appointmentPrice} EGP</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${appointmentDate}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${appointmentStartTime}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${clinicAddress}</p>
                         </div>
                     </div>
                     <p style="color: #555; font-size: 16px; line-height: 1.6;">
                         Please arrive 15 minutes before your scheduled time. For cancellations, kindly notify us at least 24 hours in advance.
                     </p>
                 </div>
+
+                <!-- Footer Section -->
                 <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
                     <p style="margin: 0;">
                         Need to reschedule? Contact us at
@@ -123,10 +116,113 @@ const createAppointemnt = async (req, res) => {
                 </div>
             </div>
         </div>
+
+        <!-- Media Query -->
+        <style>
+            @media only screen and (max-width: 600px) {
+                div[style*="padding: 40px;"] {
+                    padding: 20px !important;
+                }
+
+                div[style*="padding: 30px;"] {
+                    padding: 20px !important;
+                }
+
+                h1, h2 {
+                    font-size: 20px !important;
+                }
+
+                p, a {
+                    font-size: 14px !important;
+                }
+
+                span[style*="font-size: 28px;"] {
+                    font-size: 20px !important;
+                    padding: 10px 20px !important;
+                }
+
+                a[style*="padding: 14px 40px;"] {
+                    padding: 10px 20px !important;
+                }
+            }
+        </style>
+        `,
+    };
+    const doctorMailOptions = {
+      from: "bimar.med24@gmail.com",
+      to: doctor.doctorEmail,
+      subject: "New Appointment Scheduled",
+      html: `
+       <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
+
+            <!-- Header Section -->
+            <div style="background-color: #16423C; padding: 30px; text-align: center;">
+                <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">🩺 New Appointment</h1>
+            </div>
+
+            <!-- Content Section -->
+            <div style="padding: 30px;">
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Dr. ${doctor.doctorName}</h2>
+                <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                    You have a new appointment scheduled with <strong>${patientName}</strong>:
+                </p>
+                <div style="margin: 25px 0;">
+                    <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
+                        <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${appointmentDate}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${appointmentStartTime}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>📞 Contact:</strong> ${patientPhone}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Email:</strong> ${patientEmail}</p>
+                    </div>
+                </div>
+                <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                    Please review the patient's medical history in your dashboard and prepare any necessary documents.
+                </p>
+            </div>
+
+            <!-- Footer Section -->
+            <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
+                <p style="margin: 0;">
+                    Need assistance? Contact us at
+                    <a href="mailto:bimar.med24@gmail.com" style="color: #16423C; text-decoration: underline;">bimar.med24@gmail.com</a>
+                </p>
+                <p style="margin-top: 8px;">&copy; 2024 <span style="color: #16423C; font-weight: bold;">Bimar</span>. All Rights Reserved.</p>
+            </div>
+        </div>
+    </div>
+    <!-- Media Query -->
+    <style>
+         @media only screen and (max-width: 600px) {
+                div[style*="padding: 40px;"] {
+                    padding: 20px !important;
+                }
+
+                div[style*="padding: 30px;"] {
+                    padding: 20px !important;
+                }
+
+                h1, h2 {
+                    font-size: 20px !important;
+                }
+
+                p, a {
+                    font-size: 14px !important;
+                }
+
+                span[style*="font-size: 28px;"] {
+                    font-size: 20px !important;
+                    padding: 10px 20px !important;
+                }
+
+                a[style*="padding: 14px 40px;"] {
+                    padding: 10px 20px !important;
+                }
+            }
+    </style>
       `,
     };
-
     await transporter.sendMail(patientMailOptions);
+    await transporter.sendMail(doctorMailOptions);
   } catch (error) {
     console.log(error);
     errorHandler(res, error);
@@ -179,6 +275,24 @@ const updateAppointment = async (req, res) => {
     if (!appointment) {
       throw "Appointment not found";
     }
+
+    //
+    const patientMailOptions = {
+      from: "bimar.med24@gmail.com",
+      to: patientEmail,
+      subject: "Appointment Update confirmed",
+      html: ``,
+    };
+
+    const doctorMailOptions = {
+      from: "bimar.med24@gmail.com",
+      to: doctor.doctorEmail,
+      subject: "An Appointment rescheduled",
+      html: ``,
+    };
+
+    await transporter.sendMail(patientMailOptions);
+    await transporter.sendMail(doctorMailOptions);
 
     res.status(200).json({
       status: responseMsgs.SUCCESS,
