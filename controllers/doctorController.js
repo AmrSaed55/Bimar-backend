@@ -433,6 +433,20 @@ const updateClinic = async (req, res) => {
   }
 };
 
+const getField = async (req, res) => {
+  try {
+    const { field } = req.body; // Extract field from the request body
+    const doctors = await doctor.find({ field: field });
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: doctors,
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
 export default {
   register,
   login,
@@ -444,4 +458,5 @@ export default {
   deleteClinic,
   updateDoctor,
   updateClinic,
+  getField,
 };
