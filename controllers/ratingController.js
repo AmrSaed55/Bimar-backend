@@ -12,9 +12,9 @@ const submitRating = async(req,res)=>{
         if(!token) throw "Token not found";
 
         const decoded = jwt.verify(token, process.env.JWT_KEY);
-        const patientEmail = decoded.email;
+        const userId = decoded.userId;
 
-        const patient = await Patient.findOne({userEmail: patientEmail});
+        const patient = await Patient.findById(userId);
         if(!patient) throw "Patient not found";
 
         const {doctorId, rating, comment} = req.body;
@@ -145,10 +145,10 @@ const updateRating = async (req, res) => {
         if (!token) throw "Token not found";
 
         const decoded = jwt.verify(token, process.env.JWT_KEY);
-        const patientEmail = decoded.email;
+        const userId = decoded.userId;
 
         // Get patient details
-        const patient = await Patient.findOne({ userEmail: patientEmail });
+        const patient = await Patient.findById(userId);
         if (!patient) throw "Patient not found";
 
         const { ratingId, rating, comment } = req.body;
@@ -214,10 +214,10 @@ const deleteRating = async (req, res) => {
         if (!token) throw "Token not found";
 
         const decoded = jwt.verify(token, process.env.JWT_KEY);
-        const patientEmail = decoded.email;
+        const userId = decoded.userId;
 
         // Get patient details
-        const patient = await Patient.findOne({ userEmail: patientEmail });
+        const patient = await Patient.findById(userId);
         if (!patient) throw "Patient not found";
 
         const { ratingId } = req.params;

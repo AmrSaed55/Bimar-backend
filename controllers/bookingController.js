@@ -13,10 +13,10 @@ const createAppointemnt = async (req, res) => {
     if (!token) throw "Token not found";
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const patientEmail = decoded.email;
+    const userId = decoded.userId;
 
-    // Fetch patient details from DB
-    const patient = await Patient.findOne({ userEmail: patientEmail });
+    // Fetch patient details from DB using ID instead of email
+    const patient = await Patient.findById(userId);
     if (!patient) throw "Patient not found";
 
     const {
@@ -76,7 +76,7 @@ const createAppointemnt = async (req, res) => {
 
     const patientMailOptions = {
       from: "bimar.med24@gmail.com",
-      to: patientEmail,
+      to: patient.userEmail,
       subject: "Appointment Booked Successfully",
       html: `
         <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
@@ -236,11 +236,11 @@ const getAppointments = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const email = decoded.email;
+    const userId = decoded.userId;
 
     // Check if request from patient or doctor
-    const patient = await Patient.findOne({ userEmail: email });
-    const doctor = await Doctor.findOne({ doctorEmail: email });
+    const patient = await Patient.findById(userId);
+    const doctor = await Doctor.findById(userId );
 
     let appointments;
     if (patient) {
@@ -420,10 +420,10 @@ const cancelAppointment = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const email = decoded.email;
+    const userId = decoded.userId;
 
-    const patient = await Patient.findOne({ userEmail: email });
-    const doctor = await Doctor.findOne({ doctorEmail: email });
+    const patient = await Patient.findById(userId);
+    const doctor = await Doctor.findById(userId);
     if (!patient && !doctor) {
       throw "User not found";
     }
