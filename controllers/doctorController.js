@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import responseMsgs from "../utilities/responseMsgs.js";
 import errorHandler from "../utilities/errorHandler.js";
 import nodemailer from "nodemailer";
+import generateTokenAndSetCookie from "./../utilities/generateToken.js";
+
 
 // Register Function
 const register = async (req, res) => {
@@ -76,19 +78,20 @@ const register = async (req, res) => {
               </div>`,
     };
 
-    await transporter.sendMail(mailOptions);
-
-    res.status(201).json({
-      status: responseMsgs.SUCCESS,
-      data: "SignUp Successfully",
-    });
+    if (addDoctor){
+      generateTokenAndSetCookie(addDoctor._id, res);
+      await transporter.sendMail(mailOptions);
+      res.status(201).json({
+        status: responseMsgs.SUCCESS,
+        data: "SignUp Successfully",
+      });
+    }
   } catch (er) {
-    console.log(er);
+    console.log("Error in register DOCTOR controller", er.message);
     errorHandler(res, er);
   }
 };
 
-// Login Function
 const login = async (req, res) => {
   try {
     let credentials = req.body;
@@ -96,7 +99,7 @@ const login = async (req, res) => {
       doctorEmail: credentials.doctorEmail,
     });
     if (!getDoctor) {
-      throw "User Not Found";
+      return res.status(400).json({ error: "doctor not found" });
     }
 
     let checkPassword = await bcrypt.compare(
@@ -104,22 +107,20 @@ const login = async (req, res) => {
       getDoctor.doctorPassword
     );
     if (!checkPassword) {
-      throw "Wrong Password";
+      return res.status(400).json({ error: "wrong password" });
     }
 
     const doctorData = getDoctor;
 
-    let token = jwt.sign(
-      { email: credentials.doctorEmail },
-      process.env.JWT_KEY
-    );
-    res.status(200).cookie("jwt", token).json({
+    generateTokenAndSetCookie(getDoctor._id, res);
+
+    res.status(200).json({
       status: responseMsgs.SUCCESS,
       data: "Logged In Successfully",
       doctor: doctorData,
     });
   } catch (er) {
-    console.log(er);
+    console.log("Error in login doctor controller", er.message);
     errorHandler(res, er);
   }
 };
@@ -433,6 +434,20 @@ const updateClinic = async (req, res) => {
   }
 };
 
+const getField = async (req, res) => {
+  try {
+    const { field } = req.body; // Extract field from the request body
+    const doctors = await doctor.find({ field: field });
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: doctors,
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
 export default {
   register,
   login,
@@ -444,4 +459,5 @@ export default {
   deleteClinic,
   updateDoctor,
   updateClinic,
+  getField,
 };
