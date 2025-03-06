@@ -70,6 +70,18 @@ const DoctorSchema = mongoose.Schema({
       Price: { type: Number, required: true },
     },
   ],
+  ratings: {
+    averageRating: { 
+      type: Number, 
+      default: 0,
+      min: 0,
+      max: 5 
+    },
+    totalRatings: { 
+      type: Number, 
+      default: 0 
+    },
+  },
 });
 
 const Doctor = mongoose.model("Doctor", DoctorSchema);

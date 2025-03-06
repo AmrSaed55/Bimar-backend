@@ -20,6 +20,7 @@ import bookingRoutes from "./Routes/bookingRoutes.js";
 import accessRecordRoute from "./Routes/accessRecordRoute.js";
 import chatRoutes from "./Routes/chatRoutes.js";
 import connectToMongoDB from "./db/connectToMongoDB.js";
+import ratingRoutes from './Routes/ratingRoutes.js'
 
 import {scheduleReminders} from "./controllers/automaticMedicineAlert.js"
 
@@ -71,6 +72,7 @@ app.use("/chat", chatRoutes);
 app.use("/ai", aiRoutes);
 app.use("/symptoms", symptoms);
 app.use("/analytics", appointmentAnalytics);
+app.use('/rate',ratingRoutes);
 
 const onlineUsers = {};
 
