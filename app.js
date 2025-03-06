@@ -21,6 +21,7 @@ import accessRecordRoute from "./Routes/accessRecordRoute.js";
 import chatRoutes from "./Routes/chatRoutes.js";
 import connectToMongoDB from "./db/connectToMongoDB.js";
 import ratingRoutes from './Routes/ratingRoutes.js'
+import appRatingRoutes from './Routes/appRatingRoutes.js';
 
 import {scheduleReminders} from "./controllers/automaticMedicineAlert.js"
 
@@ -73,6 +74,7 @@ app.use("/ai", aiRoutes);
 app.use("/symptoms", symptoms);
 app.use("/analytics", appointmentAnalytics);
 app.use('/rate',ratingRoutes);
+app.use('/rateApp', appRatingRoutes);
 
 const onlineUsers = {};
 
@@ -111,6 +113,8 @@ io.on("connection", (socket) => {
 
       socket.join(data.chatRoom);
 
+
+//! expected error for Doctor var
       // Get user details based on type
       let userName;
       if (data.userType === "Doctor") {
