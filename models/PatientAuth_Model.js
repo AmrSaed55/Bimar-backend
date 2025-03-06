@@ -6,7 +6,7 @@ const PatientSchema = mongoose.Schema({
   userPhone: String,
   userEmail: String,
   userPassword: String,
-  fcmToken : String,
+  // fcmToken : String,
   profileImage: { type: String, default: null },
   medicalRecord: {
     allgeric: [String],

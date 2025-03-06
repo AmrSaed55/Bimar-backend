@@ -35,7 +35,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     let credetials = req.body;
-    let getPatient = await Patient.findOne({ userEmail: credetials.userEmail });
+    let getPatient = await Patient.findOne({ userEmail: credetials.userEmail })
     if (!getPatient) {
       throw "User Not Found";
     }
@@ -49,9 +49,17 @@ const login = async (req, res) => {
     }
 
     const patientData = {
+      id : getPatient._id,
       userEmail: getPatient.userEmail,
       userName: getPatient.userName,
       userPhone: getPatient.userPhone,
+      userHeight : getPatient.personalRecords.userHeight,
+      userWeight : getPatient.personalRecords.userWeight,
+      DateOfBirth : getPatient.personalRecords.DateOfBirth,
+      Gender : getPatient.personalRecords.Gender,
+      City : getPatient.personalRecords.City,
+      Area : getPatient.personalRecords.Area,
+      bloodType : getPatient.medicalRecord.bloodType,
     };
 
     let token = jwt.sign(
