@@ -59,24 +59,24 @@ import User from "../models/PatientAuth_Model.js";
           throw "Phone Already Exists";
         }
       }),
-    body("personalRecords.City").notEmpty().withMessage("City cant be Empty"),
-    body("personalRecords.Area").notEmpty().withMessage("Area cant be Empty"),
-    body("personalRecords.Gender")
-      .notEmpty()
-      .withMessage("Gender cant be Empty")
-      .isIn(["Male", "Female"])
-      .withMessage(
-        "invalid gender we don't support LGPTQ choose between Male or Female"
-      ),
-    body("personalRecords.userWeight")
-      .notEmpty()
-      .withMessage("Weight cant be Empty"),
-    body("personalRecords.userHeight")
-      .notEmpty()
-      .withMessage("Height cant be Empty"),
-    body("personalRecords.DateOfBirth")
-      .notEmpty()
-      .withMessage("DateOfBirth cant be Empty"),
+    // body("personalRecords.City").notEmpty().withMessage("City cant be Empty"),
+    // body("personalRecords.Area").notEmpty().withMessage("Area cant be Empty"),
+    // body("personalRecords.Gender")
+    //   .notEmpty()
+    //   .withMessage("Gender cant be Empty")
+    //   .isIn(["Male", "Female"])
+    //   .withMessage(
+    //     "invalid gender we don't support LGPTQ choose between Male or Female"
+    //   ),
+    // body("personalRecords.userWeight")
+    //   .notEmpty()
+    //   .withMessage("Weight cant be Empty"),
+    // body("personalRecords.userHeight")
+    //   .notEmpty()
+    //   .withMessage("Height cant be Empty"),
+    // body("personalRecords.DateOfBirth")
+    //   .notEmpty()
+    //   .withMessage("DateOfBirth cant be Empty"),
     // body("personalRecords.emergencyContact")
     //   .notEmpty()
     //   .withMessage("emergencyContact cant be Empty")
