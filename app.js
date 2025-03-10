@@ -18,7 +18,7 @@ import diagnosisRoute from "./Routes/diagnosisRoute.js";
 import patientRecordRoute from "./Routes/personalRecordRoute.js";
 import bookingRoutes from "./Routes/bookingRoutes.js";
 import accessRecordRoute from "./Routes/accessRecordRoute.js";
-import meesageRoutes from "./Routes/messaageRotes.js";
+import meesageRoutes from "./Routes/messaageRoutes.js";
 import connectToMongoDB from "./db/connectToMongoDB.js";
 
 import {scheduleReminders} from "./controllers/automaticMedicineAlert.js"
