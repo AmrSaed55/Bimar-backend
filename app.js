@@ -18,7 +18,7 @@ import diagnosisRoute from "./Routes/diagnosisRoute.js";
 import patientRecordRoute from "./Routes/personalRecordRoute.js";
 import bookingRoutes from "./Routes/bookingRoutes.js";
 import accessRecordRoute from "./Routes/accessRecordRoute.js";
-import chatRoutes from "./Routes/chatRoutes.js";
+import meesageRoutes from "./Routes/messaageRotes.js";
 import connectToMongoDB from "./db/connectToMongoDB.js";
 
 import {scheduleReminders} from "./controllers/automaticMedicineAlert.js"
@@ -67,7 +67,7 @@ app.use("/doctor", doctorRoutes);
 app.use("/patientRecords", patientRecordRoute);
 app.use("/bookings", bookingRoutes);
 app.use("/access", accessRecordRoute);
-app.use("/chat", chatRoutes);
+app.use("/messages", meesageRoutes);
 app.use("/ai", aiRoutes);
 app.use("/symptoms", symptoms);
 app.use("/analytics", appointmentAnalytics);
