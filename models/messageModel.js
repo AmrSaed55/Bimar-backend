@@ -2,29 +2,25 @@ import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema(
   {
-    sender: {
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        refPath: "sender.modelType",
-      },
-      modelType: {
-        type: String,
-        required: true,
-        enum: ["Doctor", "Patient"], // Allowed references
-      },
+    senderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      refPath: "senderRole", // Dynamic reference
     },
-    receiver: {
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        refPath: "receiver.modelType",
-      },
-      modelType: {
-        type: String,
-        required: true,
-        enum: ["Doctor", "Patient"],
-      },
+    senderRole: {
+      type: String,
+      required: true,
+      enum: ["Doctor", "Patient"], // Allowed roles
+    },
+    receiverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      refPath: "receiverRole", // Dynamic reference
+    },
+    receiverRole: {
+      type: String,
+      required: true,
+      enum: ["Doctor", "Patient"], // Allowed roles
     },
     message: {
       type: String,

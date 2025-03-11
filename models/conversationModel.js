@@ -7,9 +7,9 @@ const conversationSchema = new mongoose.Schema(
         user: {
           type: mongoose.Schema.Types.ObjectId,
           required: true,
-          refPath: "participants.modelType", // Dynamic reference
+          refPath: "participants.role", // Dynamic reference
         },
-        modelType: {
+        role: {
           type: String,
           required: true,
           enum: ["Doctor", "Patient"], // Allowed references
