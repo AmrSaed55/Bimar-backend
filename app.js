@@ -9,7 +9,7 @@ import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import fs from "fs"; // For file writing
-import Message from "./models/chatModel.js";
+import Message from "./models/messageModel.js";
 
 import patientAuth from "./Routes/patientAuth.js";
 import medicalRecordRoutes from "./Routes/medicalRecordRoutes.js";
