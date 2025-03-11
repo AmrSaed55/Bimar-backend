@@ -26,7 +26,7 @@ const register = async (req, res) => {
     });
 
     if(addPatient){
-      generateTokenAndSetCookie(addPatient._id, "patient", res);
+      generateTokenAndSetCookie(addPatient._id, "Patient", res);
       res.status(201).json({
         status: responseMsgs.SUCCESS,
         data: "SignUp Successfully",
@@ -62,7 +62,7 @@ const login = async (req, res) => {
       userPhone: getPatient.userPhone,
     };
     
-    generateTokenAndSetCookie(getPatient._id, "patient", res);
+    generateTokenAndSetCookie(getPatient._id, "Patient", res);
 
     res.status(200).json({
       status: responseMsgs.SUCCESS,

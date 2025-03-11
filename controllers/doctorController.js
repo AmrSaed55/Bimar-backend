@@ -79,7 +79,7 @@ const register = async (req, res) => {
     };
 
     if (addDoctor){
-      generateTokenAndSetCookie(addDoctor._id, "doctor", res);
+      generateTokenAndSetCookie(addDoctor._id, "Doctor", res);
       await transporter.sendMail(mailOptions);
       res.status(201).json({
         status: responseMsgs.SUCCESS,
@@ -112,7 +112,7 @@ const login = async (req, res) => {
 
     const doctorData = getDoctor;
 
-    generateTokenAndSetCookie(getDoctor._id, "doctor", res);
+    generateTokenAndSetCookie(getDoctor._id, "Doctor", res);
 
     res.status(200).json({
       status: responseMsgs.SUCCESS,

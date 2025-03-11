@@ -9,18 +9,21 @@ const protectRoute = async (req, res, next) => {
     if (!token) {
         return res.status(401).json({ error: "Unauthorized - No Token Provided" });
     }
+    console.log("token : ",token )
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
 
-    if (!decoded || !decoded.userId || !decoded.role) {
+    if (!decoded || !decoded.userId || !decoded.role ) {
         return res.status(401).json({ error: "Unauthorized - Invalid Token" });
     }
+    console.log("curent userId : " , decoded.userId )
+
 
     let user;
 
-    if (decoded.role === "doctor") {
+    if (decoded.role === "Doctor") {
         user = await doctor.findById(decoded.userId).select("-password");
-    } else if (decoded.role === "patient") {
+    } else if (decoded.role === "Patient") {
         user = await Patient.findById(decoded.userId).select("-password");
     }
 
@@ -29,7 +32,7 @@ const protectRoute = async (req, res, next) => {
     }
 
     req.user = user;
-    req.userRole = role; // to know this user doctor or patient
+    req.userRole = decoded.role; // to know this user doctor or patient
 
     next();
   } catch (error) {
