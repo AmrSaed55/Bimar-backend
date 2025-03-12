@@ -5,6 +5,6 @@ import protectRoute from "../middleware/protectRoute.js"
 const router = express.Router();
 
 router.post("/send/:id", protectRoute, messageController.sendMessage);
-router.get("/history/:doctorId/:patientId", messageController.getChatHistory);
+router.get("/:id", protectRoute, messageController.getMessages);
 
 export default router;

@@ -60,27 +60,32 @@ const sendMessage = async (req, res) => {
   }
 };
 
-const getChatHistory = async (req, res) => {
+const getMessages = async (req, res) => {
   try {
-    const { doctorId, patientId } = req.params;
+    const { id: userToChatId } = req.params;
+    const senderId = req.user._id;
 
-    const messages = await Message.find({
-      $or: [
-        { sender: doctorId, receiver: patientId },
-        { sender: patientId, receiver: doctorId },
-      ],
-    }).sort({ timestamp: 1 });
+    const senderObjectId = new mongoose.Types.ObjectId(senderId);
+    const userToChatObjectId = new mongoose.Types.ObjectId(userToChatId);
 
-    res.status(200).json({
-      status: "success",
-      data: messages,
-    });
-  } catch (err) {
-    errorHandler(res, err);
+    const conversation = await Conversation.findOne({
+      $and: [
+        { "participants.user": senderObjectId },
+        { "participants.user": userToChatObjectId }
+      ]
+    }).populate("messages"); // Populate actual messages
+
+    if (!conversation) return res.status(200).json([]);
+
+    res.status(200).json(conversation.messages);
+  } catch (error) {
+    console.log("Error in getMessages controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
+
 export default {
-  getChatHistory,
+  getMessages,
   sendMessage
 };
