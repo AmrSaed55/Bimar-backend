@@ -2,6 +2,9 @@ import Message from "../models/messageModel.js";
 import mongoose from 'mongoose';
 import errorHandler from "../utilities/errorHandler.js";
 import Conversation from "../models/conversationModel.js";
+import upload from "../middleware/multerConfig.js"
+import fs from "fs";
+import path from "path";
 
 const sendMessage = async (req, res) => {
   try {
@@ -38,12 +41,19 @@ const sendMessage = async (req, res) => {
       });
     }
 
+    // Handle uploaded files
+    const files = req.files?.map((file) => ({
+      url: `/uploads/chat/${file.filename}`,
+      type: file.mimetype,
+    })) || [];
+
     const newMessage = new Message({
       senderId,
       senderRole,
       receiverId,
       receiverRole,
       message,
+      files, // Store file data
     });
 
     if (newMessage) {
