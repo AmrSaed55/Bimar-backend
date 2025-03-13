@@ -7,7 +7,6 @@ import errorHandler from "../utilities/errorHandler.js";
 import nodemailer from "nodemailer";
 import generateTokenAndSetCookie from "./../utilities/generateToken.js";
 
-
 // Register Function
 const register = async (req, res) => {
   try {
@@ -78,7 +77,7 @@ const register = async (req, res) => {
               </div>`,
     };
 
-    if (addDoctor){
+    if (addDoctor) {
       generateTokenAndSetCookie(addDoctor._id, "Doctor", res);
       await transporter.sendMail(mailOptions);
       res.status(201).json({
@@ -95,11 +94,9 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     let credentials = req.body;
-    let getDoctor = await doctor.findOne({
-      doctorEmail: credentials.doctorEmail,
-    });
+    let getDoctor = await doctor.findById(credentials.doctorId);
     if (!getDoctor) {
-      return res.status(400).json({ error: "doctor not found" });
+      return res.status(400).json({ error: "Doctor not found" });
     }
 
     let checkPassword = await bcrypt.compare(
