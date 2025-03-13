@@ -26,7 +26,7 @@ const register = async (req, res) => {
     });
 
     if(addPatient){
-      generateTokenAndSetCookie(addPatient._id, res);
+      generateTokenAndSetCookie(addPatient._id, "Patient", res);
       res.status(201).json({
         status: responseMsgs.SUCCESS,
         data: "SignUp Successfully",
@@ -70,7 +70,7 @@ const login = async (req, res) => {
       bloodType : getPatient.medicalRecord.bloodType,
     };
     
-    generateTokenAndSetCookie(getPatient._id, res);
+    generateTokenAndSetCookie(getPatient._id, "Patient", res);
 
     res.status(200).json({
       status: responseMsgs.SUCCESS,
