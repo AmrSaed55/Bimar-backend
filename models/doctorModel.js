@@ -63,7 +63,7 @@ const DoctorSchema = mongoose.Schema({
             required: true,
           },
           workingHours: { type: [String], required: true },
-          examinationDuration: { type: Number, required: true },
+          NoBookings: { type: Number, required: true },
         },
       ],
       clinicLocationLinks: { type: String, required: true },

@@ -20,8 +20,6 @@ const createAppointemnt = async (req, res) => {
       doctorId,
       clinicId,
       appointmentDate,
-      appointmentStartTime,
-      appointmentEndTime,
     } = req.body;
 
     // Fetch doctor from DB
@@ -35,25 +33,55 @@ const createAppointemnt = async (req, res) => {
     // Fetch price from the CLINIC
     const appointmentPrice = clinic.Price;
 
-    // Check for conflicting appointments
-    const existingAppointment = await Appointments.findOne({
-      doctorId: doctor._id,
-      appointmentDate,
-      $or: [
-        {
-          appointmentStartTime: { $lt: new Date(appointmentEndTime) },
-          appointmentEndTime: { $gt: new Date(appointmentStartTime) },
-        },
-      ],
+    // Get the count of existing appointments for this clinic on this date
+    const startOfDay = new Date(appointmentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(appointmentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingAppointmentsCount = await Appointments.countDocuments({
+      clinicId,
+      appointmentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
     });
 
-    if (existingAppointment) throw "The Appointment slot is already booked";
+    // Check if we've reached the maximum number of bookings for this day
+    const workDay = clinic.clinicWorkDays.find(day => 
+      day.day === new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long' })
+    );
 
-    // Create appointment with fetched price
-    const appointment = await Appointments.create({
-      ...req.body,
+    if (!workDay) {
+      throw "Clinic is not open on this day";
+    }
+
+    if (existingAppointmentsCount >= workDay.NoBookings) {
+      throw "No more booking slots available for this day";
+    }
+
+    // Check if patient already has an appointment on this date
+    const existingPatientAppointment = await Appointments.findOne({
       patientId: patient._id,
+      appointmentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    });
+
+    if (existingPatientAppointment) {
+      throw "You already have an appointment scheduled for this day. Please choose a different date.";
+    }
+
+    // Create appointment with the next booking number
+    const appointment = await Appointments.create({
+      patientId: patient._id,
+      doctorId,
+      clinicId,
+      appointmentDate,
+      bookingNumber: existingAppointmentsCount + 1,
       Price: appointmentPrice,
+      bookingType: req.body.bookingType || "first-Visit"
     });
 
     res.status(200).json({
@@ -95,15 +123,10 @@ const createAppointemnt = async (req, res) => {
                     </p>
                     <div style="margin: 25px 0;">
                         <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                            <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(
-                              appointmentDate
-                            ).toLocaleDateString()}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${new Date(
-                              appointmentStartTime
-                            ).toLocaleTimeString()}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${
-                              clinic.clinicAddress
-                            }</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString()}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Your Booking Number:</strong> ${appointment.bookingNumber}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Clinic Working Hours:</strong> ${workDay.workingHours.join(' - ')}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${clinic.clinicAddress}, ${clinic.clinicArea}, ${clinic.clinicCity}</p>
                         </div>
                     </div>
                     <p style="color: #555; font-size: 16px; line-height: 1.6;">
@@ -173,24 +196,15 @@ const createAppointemnt = async (req, res) => {
                   doctor.doctorName
                 }</h2>
                 <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                    You have a new appointment scheduled with <strong>${
-                      patient.userName
-                    }</strong>:
+                    A new appointment has been scheduled at your clinic.
                 </p>
                 <div style="margin: 25px 0;">
                     <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                        <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(
-                          appointmentDate
-                        ).toLocaleDateString()}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${new Date(
-                          appointmentStartTime
-                        ).toLocaleTimeString()}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>📞 Contact:</strong> ${
-                          patient.userPhone
-                        }</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Email:</strong> ${
-                          patient.userEmail
-                        }</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString()}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Booking Number:</strong> ${appointment.bookingNumber}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>👤 Patient Name:</strong> ${patient.userName}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>📞 Patient Phone:</strong> ${patient.userPhone}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Patient Email::</strong> ${patient.userEmail}</p>
                     </div>
                 </div>
                 <p style="color: #555; font-size: 16px; line-height: 1.6;">
@@ -324,13 +338,68 @@ const updateAppointment = async (req, res) => {
       doctorName: oldAppointment.doctorId?.doctorName,
       doctorEmail: oldAppointment.doctorId?.doctorEmail,
       oldDate: oldAppointment.appointmentDate,
-      oldStartTime: oldAppointment.appointmentStartTime,
-      newDate:
-        appointmentData.appointmentDate || oldAppointment.appointmentDate,
-      newStartTime:
-        appointmentData.appointmentStartTime ||
-        oldAppointment.appointmentStartTime,
+      newDate: appointmentData.appointmentDate || oldAppointment.appointmentDate,
     };
+
+    // If the appointment date is being changed
+    if (appointmentData.appointmentDate && 
+        appointmentData.appointmentDate !== oldAppointment.appointmentDate.toISOString()) {
+      
+      // 1. Get the old date's appointments after this booking number
+      const oldDateStart = new Date(oldAppointment.appointmentDate);
+      oldDateStart.setHours(0, 0, 0, 0);
+      const oldDateEnd = new Date(oldAppointment.appointmentDate);
+      oldDateEnd.setHours(23, 59, 59, 999);
+
+      // Find appointments on the old date with higher booking numbers
+      const appointmentsToUpdate = await Appointments.find({
+        clinicId: oldAppointment.clinicId,
+        appointmentDate: {
+          $gte: oldDateStart,
+          $lte: oldDateEnd
+        },
+        bookingNumber: { $gt: oldAppointment.bookingNumber }
+      });
+
+      // 2. Decrease booking numbers for remaining appointments on old date
+      for (const apt of appointmentsToUpdate) {
+        await Appointments.findByIdAndUpdate(apt._id, {
+          $inc: { bookingNumber: -1 }
+        });
+      }
+
+      // 3. Get count of appointments on new date to determine new booking number
+      const newDateStart = new Date(appointmentData.appointmentDate);
+      newDateStart.setHours(0, 0, 0, 0);
+      const newDateEnd = new Date(appointmentData.appointmentDate);
+      newDateEnd.setHours(23, 59, 59, 999);
+
+      const newDateAppointmentsCount = await Appointments.countDocuments({
+        clinicId: oldAppointment.clinicId,
+        appointmentDate: {
+          $gte: newDateStart,
+          $lte: newDateEnd
+        }
+      });
+
+      // 4. Check if the new date has available slots
+      const doctor = await Doctor.findById(oldAppointment.doctorId);
+      const clinic = doctor.clinic.find(c => c._id.toString() === oldAppointment.clinicId.toString());
+      const newDateWorkDay = clinic.clinicWorkDays.find(day => 
+        day.day === new Date(appointmentData.appointmentDate).toLocaleDateString('en-US', { weekday: 'long' })
+      );
+
+      if (!newDateWorkDay) {
+        throw "Clinic is not open on the selected day";
+      }
+
+      if (newDateAppointmentsCount >= newDateWorkDay.NoBookings) {
+        throw "No more booking slots available for the selected date";
+      }
+
+      // 5. Assign new booking number
+      appointmentData.bookingNumber = newDateAppointmentsCount + 1;
+    }
 
     // Update the appointment
     const updatedAppointment = await Appointments.findByIdAndUpdate(
@@ -346,14 +415,8 @@ const updateAppointment = async (req, res) => {
       message: "Appointment updated successfully",
     });
 
-    // Try to send notification emails
+    // Send notification emails
     try {
-      // Validate email data
-      if (!emailData.patientEmail && !emailData.doctorEmail) {
-        console.log("No valid email recipients found");
-        return;
-      }
-
       const transporter = nodemailer.createTransport({
         service: "gmail",
         port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -363,20 +426,45 @@ const updateAppointment = async (req, res) => {
         },
       });
 
-      const emailPromises = [];
+      // Get working hours for the new date
+      const doctor = await Doctor.findById(oldAppointment.doctorId);
+      const clinic = doctor.clinic.find(c => c._id.toString() === oldAppointment.clinicId.toString());
+      const workDay = clinic.clinicWorkDays.find(day => 
+        day.day === new Date(updatedAppointment.appointmentDate).toLocaleDateString('en-US', { weekday: 'long' })
+      );
 
-      // Only send patient email if we have a valid patient email
       if (emailData.patientEmail) {
         const patientMailOptions = {
           from: "bimar.med24@gmail.com",
           to: emailData.patientEmail,
           subject: "Appointment Update Confirmation",
-          html: ``,
+          html: `
+            <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
+                    <div style="background-color: #16423C; padding: 30px; text-align: center;">
+                        <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">🔄 Appointment Updated</h1>
+                    </div>
+                    <div style="padding: 30px;">
+                        <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, ${emailData.patientName}</h2>
+                        <div style="margin: 25px 0;">
+                            <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
+                                <p style="margin: 5px 0; color: #16423C;"><strong>📅 New Date:</strong> ${new Date(updatedAppointment.appointmentDate).toLocaleDateString()}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>🔢 New Booking Number:</strong> ${updatedAppointment.bookingNumber}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Clinic Working Hours:</strong> ${workDay.workingHours.join(' - ')}</p>
+                            </div>
+                            <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
+                                <h3 style="color: #0A558C; margin: 0 0 10px 0;">Previous Details</h3>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Date:</strong> ${new Date(emailData.oldDate).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          `
         };
-        emailPromises.push(transporter.sendMail(patientMailOptions));
+        await transporter.sendMail(patientMailOptions);
       }
 
-      // Only send doctor email if we have a valid doctor email
       if (emailData.doctorEmail) {
         const doctorMailOptions = {
           from: "bimar.med24@gmail.com",
@@ -389,53 +477,27 @@ const updateAppointment = async (req, res) => {
                         <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">🔄 Appointment Updated</h1>
                     </div>
                     <div style="padding: 30px;">
-                        <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Dr. ${
-                          emailData.doctorName || "Doctor"
-                        }</h2>
-                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                            An appointment with patient <strong>${
-                              emailData.patientName || "your patient"
-                            }</strong> has been updated.
-                        </p>
+                        <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, Dr. ${emailData.doctorName}</h2>
                         <div style="margin: 25px 0;">
                             <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Date:</strong> ${new Date(
-                                  emailData.oldDate
-                                ).toLocaleDateString()}</p>
-                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Time:</strong> ${new Date(
-                                  emailData.oldStartTime
-                                ).toLocaleTimeString()}</p>
-                                <p style="margin: 15px 0 5px 0; color: #16423C;"><strong>New Date:</strong> ${new Date(
-                                  emailData.newDate
-                                ).toLocaleDateString()}</p>
-                                <p style="margin: 5px 0; color: #16423C;"><strong>New Time:</strong> ${new Date(
-                                  emailData.newStartTime
-                                ).toLocaleTimeString()}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>👤 Patient:</strong> ${emailData.patientName}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>📅 New Date:</strong> ${new Date(updatedAppointment.appointmentDate).toLocaleDateString()}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>🔢 New Booking Number:</strong> ${updatedAppointment.bookingNumber}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Clinic Working Hours:</strong> ${workDay.workingHours.join(' - ')}</p>
+                            </div>
+                            <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
+                                <h3 style="color: #0A558C; margin: 0 0 10px 0;">Previous Details</h3>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Date:</strong> ${new Date(emailData.oldDate).toLocaleDateString()}</p>
                             </div>
                         </div>
                     </div>
-                    <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
-                        <p style="margin: 0;">
-                            Need assistance? Contact us at
-                            <a href="mailto:bimar.med24@gmail.com" style="color: #16423C; text-decoration: underline;">bimar.med24@gmail.com</a>
-                        </p>
-                    </div>
                 </div>
             </div>
-          `,
+          `
         };
-        emailPromises.push(transporter.sendMail(doctorMailOptions));
-      }
-
-      // Send all valid emails
-      if (emailPromises.length > 0) {
-        await Promise.all(emailPromises);
-        console.log("Update notification emails sent successfully");
-      } else {
-        console.log("No valid email recipients found");
+        await transporter.sendMail(doctorMailOptions);
       }
     } catch (emailError) {
-      // Log email sending error but don't affect the main operation
       console.log("Error sending update notification emails:", emailError);
     }
   } catch (err) {
@@ -480,29 +542,31 @@ const cancelAppointment = async (req, res) => {
       throw "Unauthorized to delete this appointment";
     }
 
-    // Validate and store email data before deletion
-    const emailData = {
-      patientName: appointment.patientId?.userName,
-      patientEmail: appointment.patientId?.userEmail,
-      doctorName: appointment.doctorId?.doctorName,
-      doctorEmail: appointment.doctorId?.doctorEmail,
-      appointmentDate: appointment.appointmentDate,
-      appointmentStartTime: appointment.appointmentStartTime,
-    };
+    // Get all appointments for the same day with higher booking numbers
+    const appointmentDate = new Date(appointment.appointmentDate);
+    const dayStart = new Date(appointmentDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(appointmentDate);
+    dayEnd.setHours(23, 59, 59, 999);
 
-    // Log email data for debugging
-    console.log("Email Data:", emailData);
+    const appointmentsToUpdate = await Appointments.find({
+      clinicId: appointment.clinicId,
+      appointmentDate: {
+        $gte: dayStart,
+        $lte: dayEnd
+      },
+      bookingNumber: { $gt: appointment.bookingNumber }
+    });
 
-    // Validate email data
-    if (!emailData.patientEmail || !emailData.doctorEmail) {
-      console.log("Missing email addresses:", {
-        patientEmail: emailData.patientEmail,
-        doctorEmail: emailData.doctorEmail,
+    // Delete the appointment first
+    await Appointments.findByIdAndDelete(appointmentId);
+
+    // Update booking numbers for remaining appointments
+    for (const apt of appointmentsToUpdate) {
+      await Appointments.findByIdAndUpdate(apt._id, {
+        $inc: { bookingNumber: -1 }
       });
     }
-
-    // Delete the appointment
-    await Appointments.findByIdAndDelete(appointmentId);
 
     // Send success response immediately
     res.status(200).json({
@@ -510,7 +574,17 @@ const cancelAppointment = async (req, res) => {
       message: "Appointment cancelled successfully",
     });
 
-    // Try to send emails only if we have valid recipients
+    // Validate and store email data
+    const emailData = {
+      patientName: appointment.patientId?.userName,
+      patientEmail: appointment.patientId?.userEmail,
+      doctorName: appointment.doctorId?.doctorName,
+      doctorEmail: appointment.doctorId?.doctorEmail,
+      appointmentDate: appointment.appointmentDate,
+      bookingNumber: appointment.bookingNumber
+    };
+
+    // Try to send emails
     try {
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -563,9 +637,144 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
+const createFollowUpAppointment = async (req, res) => {
+  try {
+    // Verify doctor's token
+    const token = req.cookies.jwt;
+    if (!token) throw "Token not provided";
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    const doctor = await Doctor.findById(decoded.userId);
+    if (!doctor) throw "Unauthorized: Only doctors can create follow-up appointments";
+
+    const {
+      patientId,
+      clinicId,
+      appointmentDate,
+    } = req.body;
+
+    // Validate patient exists
+    const patient = await Patient.findById(patientId);
+    if (!patient) throw "Patient not found";
+
+    // Find the selected clinic within the doctor's clinics
+    const clinic = doctor.clinic.find((c) => c._id.toString() === clinicId);
+    if (!clinic) throw "Invalid clinic ID for this doctor";
+
+    // Get the count of existing appointments for this date
+    const startOfDay = new Date(appointmentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(appointmentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingAppointmentsCount = await Appointments.countDocuments({
+      clinicId,
+      appointmentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    });
+
+    // Check if we've reached the maximum number of bookings for this day
+    const workDay = clinic.clinicWorkDays.find(day => 
+      day.day === new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long' })
+    );
+
+    if (!workDay) {
+      throw "Clinic is not open on this day";
+    }
+
+    if (existingAppointmentsCount >= workDay.NoBookings) {
+      throw "No more booking slots available for this day";
+    }
+
+    // Check if patient already has a follow-up appointment on this date
+    const existingFollowUp = await Appointments.findOne({
+      patientId: patientId,
+      doctorId: doctor._id,
+      appointmentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      },
+      bookingType: "follow-up"
+    });
+
+    if (existingFollowUp) {
+      throw "This patient already has a follow-up appointment scheduled for this day. Please choose a different date.";
+    }
+
+    // Also check for any other appointments the patient might have on this day
+    const existingPatientAppointment = await Appointments.findOne({
+      patientId: patientId,
+      appointmentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    });
+
+    if (existingPatientAppointment) {
+      throw "This patient already has an appointment scheduled for this day. Please choose a different date.";
+    }
+
+    // Create the follow-up appointment
+    const appointment = await Appointments.create({
+      patientId: patient._id,
+      doctorId: doctor._id,
+      clinicId,
+      appointmentDate,
+      bookingNumber: existingAppointmentsCount + 1,
+      Price: clinic.Price, //!!follow up price might be changed 
+      bookingType: "follow-up"
+    });
+
+    // Send success response
+    res.status(200).json({
+      status: "success",
+      data: appointment,
+      message: "Follow-up appointment created successfully"
+    });
+
+    // Send notification emails
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      port: parseInt(process.env.EMAIL_PORT) || 587,
+      auth: {
+        user: process.env.USER,
+        pass: process.env.PASS,
+      },
+    });
+
+    // Patient email notification
+    const patientMailOptions = {
+      from: "bimar.med24@gmail.com",
+      to: patient.userEmail,
+      subject: "Follow-up Appointment Scheduled",
+      html: ``
+    };
+
+    // Doctor confirmation email
+    const doctorMailOptions = {
+      from: "bimar.med24@gmail.com",
+      to: doctor.doctorEmail,
+      subject: "Follow-up Appointment Confirmation",
+      html: ``
+    };
+
+    await Promise.all([
+      transporter.sendMail(patientMailOptions),
+      transporter.sendMail(doctorMailOptions)
+    ]);
+
+  } catch (error) {
+    console.log(error);
+    errorHandler(res, error);
+  }
+};
+
 export default {
   createAppointemnt,
   getAppointments,
   updateAppointment,
   cancelAppointment,
+  createFollowUpAppointment
 };
