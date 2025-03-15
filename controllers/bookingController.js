@@ -13,10 +13,7 @@ const createAppointemnt = async (req, res) => {
     if (!token) throw "Token not found";
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const userId = decoded.userId;
-
-    // Fetch patient details from DB using ID instead of email
-    const patient = await Patient.findById(userId);
+    const patient = await Patient.findById(decoded.userId);
     if (!patient) throw "Patient not found";
 
     const {
@@ -88,15 +85,25 @@ const createAppointemnt = async (req, res) => {
 
                 <!-- Content Section -->
                 <div style="padding: 30px;">
-                    <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, ${patient.userName} 👋</h2>
+                    <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, ${
+                      patient.userName
+                    } 👋</h2>
                     <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                        Your appointment with <strong>Dr. ${doctor.doctorName}</strong> has been successfully booked!
+                        Your appointment with <strong>Dr. ${
+                          doctor.doctorName
+                        }</strong> has been successfully booked!
                     </p>
                     <div style="margin: 25px 0;">
                         <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                            <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString()}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${new Date(appointmentStartTime).toLocaleTimeString()}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${clinic.clinicAddress}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(
+                              appointmentDate
+                            ).toLocaleDateString()}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${new Date(
+                              appointmentStartTime
+                            ).toLocaleTimeString()}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${
+                              clinic.clinicAddress
+                            }</p>
                         </div>
                     </div>
                     <p style="color: #555; font-size: 16px; line-height: 1.6;">
@@ -146,7 +153,7 @@ const createAppointemnt = async (req, res) => {
         </style>
         `,
     };
-    
+
     const doctorMailOptions = {
       from: "bimar.med24@gmail.com",
       to: doctor.doctorEmail,
@@ -162,16 +169,28 @@ const createAppointemnt = async (req, res) => {
 
             <!-- Content Section -->
             <div style="padding: 30px;">
-                <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Dr. ${doctor.doctorName}</h2>
+                <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Dr. ${
+                  doctor.doctorName
+                }</h2>
                 <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                    You have a new appointment scheduled with <strong>${patient.userName}</strong>:
+                    You have a new appointment scheduled with <strong>${
+                      patient.userName
+                    }</strong>:
                 </p>
                 <div style="margin: 25px 0;">
                     <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                        <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString()}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${new Date(appointmentStartTime).toLocaleTimeString()}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>📞 Contact:</strong> ${patient.userPhone}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Email:</strong> ${patient.userEmail}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(
+                          appointmentDate
+                        ).toLocaleDateString()}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Time:</strong> ${new Date(
+                          appointmentStartTime
+                        ).toLocaleTimeString()}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>📞 Contact:</strong> ${
+                          patient.userPhone
+                        }</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Email:</strong> ${
+                          patient.userEmail
+                        }</p>
                     </div>
                 </div>
                 <p style="color: #555; font-size: 16px; line-height: 1.6;">
@@ -240,34 +259,35 @@ const getAppointments = async (req, res) => {
 
     // Check if request from patient or doctor
     const patient = await Patient.findById(userId);
-    const doctor = await Doctor.findById(userId );
+    const doctor = await Doctor.findById(userId);
 
     let appointments;
     if (patient) {
       appointments = await Appointments.find({ patientId: patient._id })
-        .populate('doctorId', 'doctorName field doctorImage')
-        .populate('clinicId', 'clinicAddress clinicCity clinicArea');
+        .populate("doctorId", "doctorName field doctorImage")
+        .populate("clinicId", "clinicAddress clinicCity clinicArea");
 
       if (!appointments || appointments.length === 0) {
         return res.status(200).json({
           status: responseMsgs.SUCCESS,
-          message: "You don't have any appointments yet. Book an appointment to get started!",
-          data: null
+          message:
+            "You don't have any appointments yet. Book an appointment to get started!",
+          data: null,
         });
       }
-
     } else if (doctor) {
-      appointments = await Appointments.find({ doctorId: doctor._id })
-        .populate('patientId', 'userName profileImage userPhone userEmail');
+      appointments = await Appointments.find({ doctorId: doctor._id }).populate(
+        "patientId",
+        "userName profileImage userPhone userEmail"
+      );
 
       if (!appointments || appointments.length === 0) {
         return res.status(200).json({
           status: responseMsgs.SUCCESS,
           message: "You don't have any appointments scheduled yet.",
-          data: null
+          data: null,
         });
       }
-
     } else {
       throw "User not found";
     }
@@ -276,9 +296,8 @@ const getAppointments = async (req, res) => {
     res.status(200).json({
       status: responseMsgs.SUCCESS,
       message: "Appointments retrieved successfully",
-      data: appointments
+      data: appointments,
     });
-
   } catch (error) {
     console.log(error);
     errorHandler(res, error);
@@ -288,11 +307,11 @@ const getAppointments = async (req, res) => {
 const updateAppointment = async (req, res) => {
   try {
     const appointmentData = req.body;
-    
+
     // First get the appointment with populated data before update
     const oldAppointment = await Appointments.findById(appointmentData._id)
-      .populate('patientId', 'userName userEmail')
-      .populate('doctorId', 'doctorName doctorEmail');
+      .populate("patientId", "userName userEmail")
+      .populate("doctorId", "doctorName doctorEmail");
 
     if (!oldAppointment) {
       throw "Appointment not found";
@@ -306,8 +325,11 @@ const updateAppointment = async (req, res) => {
       doctorEmail: oldAppointment.doctorId?.doctorEmail,
       oldDate: oldAppointment.appointmentDate,
       oldStartTime: oldAppointment.appointmentStartTime,
-      newDate: appointmentData.appointmentDate || oldAppointment.appointmentDate,
-      newStartTime: appointmentData.appointmentStartTime || oldAppointment.appointmentStartTime
+      newDate:
+        appointmentData.appointmentDate || oldAppointment.appointmentDate,
+      newStartTime:
+        appointmentData.appointmentStartTime ||
+        oldAppointment.appointmentStartTime,
     };
 
     // Update the appointment
@@ -321,7 +343,7 @@ const updateAppointment = async (req, res) => {
     res.status(200).json({
       status: responseMsgs.SUCCESS,
       data: updatedAppointment,
-      message: "Appointment updated successfully"
+      message: "Appointment updated successfully",
     });
 
     // Try to send notification emails
@@ -349,7 +371,7 @@ const updateAppointment = async (req, res) => {
           from: "bimar.med24@gmail.com",
           to: emailData.patientEmail,
           subject: "Appointment Update Confirmation",
-          html: ``
+          html: ``,
         };
         emailPromises.push(transporter.sendMail(patientMailOptions));
       }
@@ -367,16 +389,28 @@ const updateAppointment = async (req, res) => {
                         <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">🔄 Appointment Updated</h1>
                     </div>
                     <div style="padding: 30px;">
-                        <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Dr. ${emailData.doctorName || 'Doctor'}</h2>
+                        <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Dr. ${
+                          emailData.doctorName || "Doctor"
+                        }</h2>
                         <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                            An appointment with patient <strong>${emailData.patientName || 'your patient'}</strong> has been updated.
+                            An appointment with patient <strong>${
+                              emailData.patientName || "your patient"
+                            }</strong> has been updated.
                         </p>
                         <div style="margin: 25px 0;">
                             <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Date:</strong> ${new Date(emailData.oldDate).toLocaleDateString()}</p>
-                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Time:</strong> ${new Date(emailData.oldStartTime).toLocaleTimeString()}</p>
-                                <p style="margin: 15px 0 5px 0; color: #16423C;"><strong>New Date:</strong> ${new Date(emailData.newDate).toLocaleDateString()}</p>
-                                <p style="margin: 5px 0; color: #16423C;"><strong>New Time:</strong> ${new Date(emailData.newStartTime).toLocaleTimeString()}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Date:</strong> ${new Date(
+                                  emailData.oldDate
+                                ).toLocaleDateString()}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Time:</strong> ${new Date(
+                                  emailData.oldStartTime
+                                ).toLocaleTimeString()}</p>
+                                <p style="margin: 15px 0 5px 0; color: #16423C;"><strong>New Date:</strong> ${new Date(
+                                  emailData.newDate
+                                ).toLocaleDateString()}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>New Time:</strong> ${new Date(
+                                  emailData.newStartTime
+                                ).toLocaleTimeString()}</p>
                             </div>
                         </div>
                     </div>
@@ -388,7 +422,7 @@ const updateAppointment = async (req, res) => {
                     </div>
                 </div>
             </div>
-          `
+          `,
         };
         emailPromises.push(transporter.sendMail(doctorMailOptions));
       }
@@ -400,12 +434,10 @@ const updateAppointment = async (req, res) => {
       } else {
         console.log("No valid email recipients found");
       }
-
     } catch (emailError) {
       // Log email sending error but don't affect the main operation
       console.log("Error sending update notification emails:", emailError);
     }
-
   } catch (err) {
     console.log(err);
     errorHandler(res, err);
@@ -429,18 +461,19 @@ const cancelAppointment = async (req, res) => {
     }
 
     const appointmentId = req.params.id;
-    
+
     // Get appointment details before deletion
     const appointment = await Appointments.findById(appointmentId)
-      .populate('patientId', 'userName userEmail')
-      .populate('doctorId', 'doctorName doctorEmail');
-      
+      .populate("patientId", "userName userEmail")
+      .populate("doctorId", "doctorName doctorEmail");
+
     if (!appointment) {
       throw "Appointment not found";
     }
 
     //verify ownership
-    const isPatientOwner = patient && patient._id.equals(appointment.patientId._id);
+    const isPatientOwner =
+      patient && patient._id.equals(appointment.patientId._id);
     const isDoctorOwner = doctor && doctor._id.equals(appointment.doctorId._id);
 
     if (!isDoctorOwner && !isPatientOwner) {
@@ -454,7 +487,7 @@ const cancelAppointment = async (req, res) => {
       doctorName: appointment.doctorId?.doctorName,
       doctorEmail: appointment.doctorId?.doctorEmail,
       appointmentDate: appointment.appointmentDate,
-      appointmentStartTime: appointment.appointmentStartTime
+      appointmentStartTime: appointment.appointmentStartTime,
     };
 
     // Log email data for debugging
@@ -464,7 +497,7 @@ const cancelAppointment = async (req, res) => {
     if (!emailData.patientEmail || !emailData.doctorEmail) {
       console.log("Missing email addresses:", {
         patientEmail: emailData.patientEmail,
-        doctorEmail: emailData.doctorEmail
+        doctorEmail: emailData.doctorEmail,
       });
     }
 
@@ -474,7 +507,7 @@ const cancelAppointment = async (req, res) => {
     // Send success response immediately
     res.status(200).json({
       status: responseMsgs.SUCCESS,
-      message: "Appointment cancelled successfully"
+      message: "Appointment cancelled successfully",
     });
 
     // Try to send emails only if we have valid recipients
@@ -497,7 +530,7 @@ const cancelAppointment = async (req, res) => {
           from: "bimar.med24@gmail.com",
           to: emailData.patientEmail,
           subject: "Appointment Cancellation",
-          html: ``
+          html: ``,
         };
         emailPromises.push(transporter.sendMail(patientMailOptions));
       }
@@ -508,7 +541,7 @@ const cancelAppointment = async (req, res) => {
           from: "bimar.med24@gmail.com",
           to: emailData.doctorEmail,
           subject: "Appointment Cancellation Notice",
-          html: ``
+          html: ``,
         };
         emailPromises.push(transporter.sendMail(doctorMailOptions));
       }
@@ -520,12 +553,10 @@ const cancelAppointment = async (req, res) => {
       } else {
         console.log("No valid email recipients found");
       }
-
     } catch (emailError) {
       // Log email sending error but don't affect the main operation
       console.log("Error sending cancellation emails:", emailError);
     }
-
   } catch (err) {
     console.log(err);
     errorHandler(res, err);

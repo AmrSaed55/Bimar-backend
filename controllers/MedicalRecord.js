@@ -1,8 +1,9 @@
 import PatientModel from "../models/PatientAuth_Model.js";
-import responseMsgs from './../utilities/responseMsgs.js';
-import errorHandler from './../utilities/errorHandler.js';
+import responseMsgs from "./../utilities/responseMsgs.js";
+import errorHandler from "./../utilities/errorHandler.js";
 import { validationResult } from "express-validator";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import Patient from "../models/PatientAuth_Model.js";
 
 const createMedicalRecord = async (req, res) => {
   try {
@@ -17,27 +18,22 @@ const createMedicalRecord = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const userEmail = decoded.email;
-
-    const medicalRecordData = req.body;
-
-    // Find patient by email
-    const patient = await PatientModel.findOne({ userEmail });
+    const patient = await Patient.findById(decoded.userId);
     if (!patient) {
       throw "Patient not found";
     }
 
-    console.log('Medical Record Data:', medicalRecordData);
+    const medicalRecordData = req.body;
+
+    console.log("Medical Record Data:", medicalRecordData);
     // Update medical record
     patient.medicalRecord = medicalRecordData;
-    console.log('Saving Medical Record:', patient.medicalRecord);
+    console.log("Saving Medical Record:", patient.medicalRecord);
     await patient.save();
-    console.log(patient.medicalRecord)
-
-     
+    console.log(patient.medicalRecord);
 
     res.status(201).json({
-      status: 'success',
+      status: "success",
       data: patient.medicalRecord,
     });
   } catch (err) {
@@ -45,8 +41,6 @@ const createMedicalRecord = async (req, res) => {
     errorHandler(res, err);
   }
 };
-
-
 
 const getMedicalRecords = async (req, res) => {
   try {
@@ -60,7 +54,9 @@ const getMedicalRecords = async (req, res) => {
     const userEmail = decoded.email;
 
     // Find patient by email
-    const patient = await PatientModel.findOne({ userEmail }).select("medicalRecord");
+    const patient = await PatientModel.findOne({ userEmail }).select(
+      "medicalRecord"
+    );
     if (!patient) {
       throw "Patient not found";
     }
@@ -80,7 +76,7 @@ const updateMedicalRecord = async (req, res) => {
   try {
     const medicalRecordData = req.body;
 
-// Retrieve email from JWT
+    // Retrieve email from JWT
     const token = req.cookies.jwt;
     if (!token) {
       throw "No Token Provided";
@@ -90,7 +86,9 @@ const updateMedicalRecord = async (req, res) => {
     const userEmail = decoded.email;
 
     // Find patient by email
-    const patient = await PatientModel.findOne({ userEmail }).select("medicalRecord");
+    const patient = await PatientModel.findOne({ userEmail }).select(
+      "medicalRecord"
+    );
     if (!patient) {
       throw "Patient not found";
     }
@@ -112,8 +110,7 @@ const updateMedicalRecord = async (req, res) => {
 // Delete medical record
 const deleteMedicalRecord = async (req, res) => {
   try {
-
-// Retrieve email from JWT
+    // Retrieve email from JWT
     const token = req.cookies.jwt;
     if (!token) {
       throw "No Token Provided";
@@ -123,7 +120,9 @@ const deleteMedicalRecord = async (req, res) => {
     const userEmail = decoded.email;
 
     // Find patient by email
-    const patient = await PatientModel.findOne({ userEmail }).select("medicalRecord");
+    const patient = await PatientModel.findOne({ userEmail }).select(
+      "medicalRecord"
+    );
     if (!patient) {
       throw "Patient not found";
     }
@@ -146,5 +145,5 @@ export {
   createMedicalRecord,
   getMedicalRecords,
   updateMedicalRecord,
-  deleteMedicalRecord
+  deleteMedicalRecord,
 };

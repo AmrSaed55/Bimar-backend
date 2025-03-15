@@ -7,7 +7,7 @@ import errorHandler from "./../utilities/errorHandler.js";
 import generateTokenAndSetCookie from "./../utilities/generateToken.js";
 
 import nodemailer from "nodemailer";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
 const register = async (req, res) => {
@@ -25,13 +25,13 @@ const register = async (req, res) => {
       userPassword: hashedPassword,
     });
 
-    if(addPatient){
-      generateTokenAndSetCookie(addPatient._id, res);
+    if (addPatient) {
+      generateTokenAndSetCookie(addPatient._id, "Patient", res);
       res.status(201).json({
         status: responseMsgs.SUCCESS,
         data: "SignUp Successfully",
       });
-    }else{
+    } else {
       res.status(400).json({ error: "Invalid user data" });
     }
   } catch (er) {
@@ -42,14 +42,16 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    let credetials = req.body;
-    let getPatient = await Patient.findOne({ userEmail: credetials.userEmail })
+    let credentials = req.body;
+    let getPatient = await Patient.findOne({
+      userEmail: credentials.userEmail,
+    });
     if (!getPatient) {
-      return res.status(400).json({ error: "this email is not found" });
+      return res.status(400).json({ error: "User not found" });
     }
 
     let checkPassword = await bcrypt.compare(
-      credetials.userPassword,
+      credentials.userPassword,
       getPatient.userPassword
     );
     if (!checkPassword) {
@@ -57,24 +59,24 @@ const login = async (req, res) => {
     }
 
     const patientData = {
-      id : getPatient._id,
+      id: getPatient._id,
       userEmail: getPatient.userEmail,
       userName: getPatient.userName,
       userPhone: getPatient.userPhone,
-      userHeight : getPatient.personalRecords.userHeight,
-      userWeight : getPatient.personalRecords.userWeight,
-      DateOfBirth : getPatient.personalRecords.DateOfBirth,
-      Gender : getPatient.personalRecords.Gender,
-      City : getPatient.personalRecords.City,
-      Area : getPatient.personalRecords.Area,
-      bloodType : getPatient.medicalRecord.bloodType,
+      userHeight: getPatient.personalRecords.userHeight,
+      userWeight: getPatient.personalRecords.userWeight,
+      DateOfBirth: getPatient.personalRecords.DateOfBirth,
+      Gender: getPatient.personalRecords.Gender,
+      City: getPatient.personalRecords.City,
+      Area: getPatient.personalRecords.Area,
+      bloodType: getPatient.medicalRecord.bloodType,
     };
-    
-    generateTokenAndSetCookie(getPatient._id, res);
+
+    generateTokenAndSetCookie(getPatient._id, "Patient", res);
 
     res.status(200).json({
       status: responseMsgs.SUCCESS,
-      data: "Loged In Successfully",
+      data: "Logged In Successfully",
       patient: patientData,
     });
   } catch (er) {
@@ -244,9 +246,7 @@ const resetPassword = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const email = decoded.email;
-
-    const patient = await Patient.findOne({ userEmail: email });
+    const patient = await Patient.findById(decoded.userId);
     if (!patient) {
       throw "User Not Found";
     }
@@ -254,7 +254,7 @@ const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 6);
 
     const update = await Patient.updateOne(
-      { userEmail: email },
+      { _id: patient._id },
       { userPassword: hashedPassword }
     );
 
@@ -285,9 +285,7 @@ const updateProfilePicture = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const id = decoded.userId;
-
-    const patient = await Patient.findOne({ _id: id });
+    const patient = await Patient.findById(decoded.userId);
     if (!patient) {
       throw "Patient not found";
     }
@@ -331,7 +329,7 @@ const getPatientById = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching patient data:", error);
-    errorHandler(res,error)
+    errorHandler(res, error);
   }
 };
 
@@ -352,18 +350,17 @@ const updateFcm = async (req, res) => {
   try {
     const { patientId, fcmToken } = req.body;
 
-  if (!patientId || !fcmToken) {
-    throw "Patient ID and FCM token are required" 
-  }
+    if (!patientId || !fcmToken) {
+      throw "Patient ID and FCM token are required";
+    }
 
     await Patient.findByIdAndUpdate(patientId, { fcmToken });
     res.status(200).json({ data: "FCM token updated successfully" });
   } catch (error) {
-    console.log(error)
-    errorHandler(res,error)
+    console.log(error);
+    errorHandler(res, error);
   }
-}
-
+};
 
 export default {
   register,
@@ -374,5 +371,5 @@ export default {
   updateProfilePicture,
   getPatientById,
   updateFcm,
-  UpdatePatient
-}
+  UpdatePatient,
+};
