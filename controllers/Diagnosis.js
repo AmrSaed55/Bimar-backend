@@ -3,7 +3,7 @@ import responseMsgs from "../utilities/responseMsgs.js";
 import errorHandler from "../utilities/errorHandler.js";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
-
+import { v4 as uuidv4 } from 'uuid';
  const creatDiagnosis = async (req, res) => {
   try {
 
@@ -75,6 +75,61 @@ import jwt from "jsonwebtoken";
     errorHandler(res, err)
   }
 }
+
+const createPrescription = async (req, res) => {
+  try {
+    let patientId = req.params.id;
+    const prescriptionData = req.body; // Assuming the prescription data is in the request body
+
+    const patient = await PatientModel.findOne({ _id: patientId });
+
+    if (!patient) {
+      return res.status(404).json({ data: 'Patient not found' });
+    }
+
+    // Create a new diagnosis entry with the prescription data and other fields set to null
+    const newDiagnosis = {
+      date: new Date(),
+      doctorName: null,
+      doctorPhone: null,
+      diagnosis: [],
+      treatmentPlan: null,
+      Xray: [],
+      labResults: [],
+      prescription: {
+        prescriptionId: uuidv4(),
+        prescriptionDate: new Date(),
+        followUpDate: prescriptionData.followUpDate,
+        notes: prescriptionData.notes,
+        prescriptionInstruction: prescriptionData.prescriptionInstruction,
+        prescriptionStatus: "Pending",
+      },
+      
+      consultations: [],
+    };
+
+    // If followUpDate is null, delete the consultations field
+    // if (!prescriptionData.followUpDate) {
+    //   delete newDiagnosis.consultations;
+    // }
+
+    // Add the new diagnosis entry to the patient's diagnosis array
+    patient.Diagnosis.push(newDiagnosis);
+    await patient.save();
+
+    if (!prescriptionData.followUpDate) {
+      await PatientModel.updateOne(
+        { _id: patientId, "Diagnosis._id": patient.Diagnosis[patient.Diagnosis.length - 1]._id },
+        { $unset: { "Diagnosis.$.consultations": "" } }
+      );
+    }
+
+    res.status(201).json({ data: 'Prescription added successfully' });
+  } catch (error) {
+    console.error("Error creating prescription:", error);
+    res.status(500).json({ data: 'Something went wrong' });
+  }
+};
 
  const getDiagnosis = async (req,res)=>{
 
@@ -205,5 +260,6 @@ export default {
     deletePrescription,
     updatePrescription,
     deleteconsultation,
-    updateconsultation
+    updateconsultation,
+    createPrescription
 }

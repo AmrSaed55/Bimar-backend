@@ -16,6 +16,7 @@ router.route('/')
 router.route('/:id')
 .delete(diagnosisController.deletePrescription)
 .patch(diagnosisController.updatePrescription)
+.post(diagnosisController.createPrescription)
 
 router.route('/consultation/:id')
 .patch(diagnosisController.updateconsultation)

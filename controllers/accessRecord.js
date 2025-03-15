@@ -119,111 +119,111 @@ const generateAccessLink = async (req, res) => {
       },
     });
 
-    await transporter.sendMail({
-      from: process.env.USER,
-      to: doctor.doctorEmail,
-      subject: "Patient Medical Record Access Link",
-      html: `<div
-  style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;"
->
-  <div
-    style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;"
-  >
-    <!-- Header Section -->
-    <div style="background-color: #16423C; padding: 30px; text-align: center;">
-      <h1
-        style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;"
-      >
-        🩺 Record Access Request
-      </h1>
-    </div>
+//     await transporter.sendMail({
+//       from: process.env.USER,
+//       to: doctor.doctorEmail,
+//       subject: "Patient Medical Record Access Link",
+//       html: `<div
+//   style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;"
+// >
+//   <div
+//     style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;"
+//   >
+//     <!-- Header Section -->
+//     <div style="background-color: #16423C; padding: 30px; text-align: center;">
+//       <h1
+//         style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;"
+//       >
+//         🩺 Record Access Request
+//       </h1>
+//     </div>
 
-    <!-- Content Section -->
-    <div style="padding: 30px;">
-      <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">
-        Dr. ${doctor.doctorName}
-      </h2>
-      <p style="color: #555; font-size: 16px; line-height: 1.6;">
-        You requested access to medical records for
-        <strong>${patient.userName}</strong>:
-      </p>
+//     <!-- Content Section -->
+//     <div style="padding: 30px;">
+//       <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">
+//         Dr. ${doctor.doctorName}
+//       </h2>
+//       <p style="color: #555; font-size: 16px; line-height: 1.6;">
+//         You requested access to medical records for
+//         <strong>${patient.userName}</strong>:
+//       </p>
 
-      <div style="margin: 25px 0;">
-        <div
-          style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;"
-        >
-          <p style="text-align: center; margin: 20px 0;">
-            <a
-              href="${accessLink}"
-              style="display: inline-block; background-color: #16423C; color: #FFFFFF; font-size: 18px; font-weight: bold; text-decoration: none; padding: 14px 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"
-            >
-              Click Here
-            </a>
-          </p>
-        </div>
-      </div>
+//       <div style="margin: 25px 0;">
+//         <div
+//           style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;"
+//         >
+//           <p style="text-align: center; margin: 20px 0;">
+//             <a
+//               href="${accessLink}"
+//               style="display: inline-block; background-color: #16423C; color: #FFFFFF; font-size: 18px; font-weight: bold; text-decoration: none; padding: 14px 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"
+//             >
+//               Click Here
+//             </a>
+//           </p>
+//         </div>
+//       </div>
 
-      <div
-        style="background-color: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba;"
-      >
-        <p style="color: #856404; margin: 0; font-size: 16px;">
-          🔴 You must obtain the access password from the patient
-        </p>
-      </div>
-    </div>
+//       <div
+//         style="background-color: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba;"
+//       >
+//         <p style="color: #856404; margin: 0; font-size: 16px;">
+//           🔴 You must obtain the access password from the patient
+//         </p>
+//       </div>
+//     </div>
 
-    <!-- Footer Section -->
-    <div
-      style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;"
-    >
-      <p style="margin: 0;">
-        Need assistance? Contact us at
-        <a
-          href="mailto:bimar.med24@gmail.com"
-          style="color: #16423C; text-decoration: underline;"
-          >bimar.med24@gmail.com</a
-        >
-      </p>
-      <p style="margin-top: 8px;">
-        &copy; 2024
-        <span style="color: #16423C; font-weight: bold;">Bimar</span>. All
-        Rights Reserved.
-      </p>
-    </div>
-  </div>
-</div>
+//     <!-- Footer Section -->
+//     <div
+//       style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;"
+//     >
+//       <p style="margin: 0;">
+//         Need assistance? Contact us at
+//         <a
+//           href="mailto:bimar.med24@gmail.com"
+//           style="color: #16423C; text-decoration: underline;"
+//           >bimar.med24@gmail.com</a
+//         >
+//       </p>
+//       <p style="margin-top: 8px;">
+//         &copy; 2024
+//         <span style="color: #16423C; font-weight: bold;">Bimar</span>. All
+//         Rights Reserved.
+//       </p>
+//     </div>
+//   </div>
+// </div>
 
-<!-- Media Query -->
-<style>
-  @media only screen and (max-width: 600px) {
-         div[style*="padding: 40px;"] {
-             padding: 20px !important;
-         }
+// <!-- Media Query -->
+// <style>
+//   @media only screen and (max-width: 600px) {
+//          div[style*="padding: 40px;"] {
+//              padding: 20px !important;
+//          }
 
-         div[style*="padding: 30px;"] {
-             padding: 20px !important;
-         }
+//          div[style*="padding: 30px;"] {
+//              padding: 20px !important;
+//          }
 
-         h1, h2 {
-             font-size: 20px !important;
-         }
+//          h1, h2 {
+//              font-size: 20px !important;
+//          }
 
-         p, a {
-             font-size: 14px !important;
-         }
+//          p, a {
+//              font-size: 14px !important;
+//          }
 
-         span[style*="font-size: 28px;"] {
-             font-size: 20px !important;
-             padding: 10px 20px !important;
-         }
+//          span[style*="font-size: 28px;"] {
+//              font-size: 20px !important;
+//              padding: 10px 20px !important;
+//          }
 
-         a[style*="padding: 14px 40px;"] {
-             padding: 10px 20px !important;
-         }
-     }
-</style>
-`,
-    });
+//          a[style*="padding: 14px 40px;"] {
+//              padding: 10px 20px !important;
+//          }
+//      }
+// </style>
+// `,
+//     });
 
     await transporter.sendMail({
       from: process.env.USER,
@@ -330,12 +330,16 @@ const generateAccessLink = async (req, res) => {
 `,
     });
 
-    res.status(200).json({
+    // res.cookie("accessToken", token, {
+    //   maxAge: accessDuration * 60 * 1000, // Set expiration time
+    // });
+    
+    res.status(200).cookie("accessToken",token).json({
       accessLink,
-      token,
       expiresIn: accessDuration * 60,
       data: "Access link sent to doctor and password sent to patient",
     });
+    
   } catch (er) {
     console.log(er);
     errorHandler(res, er);
@@ -344,7 +348,11 @@ const generateAccessLink = async (req, res) => {
 
 const verifyAccessLink = async (req, res) => {
   try {
-    const { token, doctorEmail, password } = req.body;
+    const { doctorEmail, password } = req.body;
+const token = req.cookies.accessToken;
+if (!token) {
+  throw "Missing Access Token";
+}
 
     let validationError = validationResult(req);
     if (!validationError.isEmpty()) {
@@ -375,8 +383,10 @@ const verifyAccessLink = async (req, res) => {
       valid: true,
       information: {
         medicalRecord: patient.medicalRecord || "No medical records available",
-        personalRecords:
-          patient.personalRecords || "No personal records available",
+        personalRecords: patient.personalRecords || "No personal records available",
+        userName : patient.userName,
+        profileImage : patient.profileImage,
+        patientId : patient._id
       },
       data: "Access Granted",
     });

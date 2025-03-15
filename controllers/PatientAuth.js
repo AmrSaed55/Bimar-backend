@@ -285,9 +285,9 @@ const updateProfilePicture = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    const email = decoded.email;
+    const id = decoded.userId;
 
-    const patient = await Patient.findOne({ userEmail: email });
+    const patient = await Patient.findOne({ _id: id });
     if (!patient) {
       throw "Patient not found";
     }
@@ -338,6 +338,11 @@ const getPatientById = async (req, res) => {
 const UpdatePatient = async(req,res)=>{
   let id = req.params.id
   let UpdatePatientData = req.body
+  
+  if(UpdatePatientData.userPassword){
+    let newPassword = await bcrypt.hash(UpdatePatientData.userPassword, 6)
+    UpdatePatientData.userPassword = newPassword
+  }
   let update = await Patient.updateOne({_id : id},UpdatePatientData)
   res.json(update ? {data :'Updated Successfulyy'} : {data : 'Something wend Wrong'})
 }

@@ -36,13 +36,14 @@ const PatientSchema = mongoose.Schema({
     prescription: {
       prescriptionId: { type: String, default: uuidv4 },
       prescriptionDate: Date,
+      followUpDate: Date,
+      notes: String,
       prescriptionInstruction: [
         {
           medication: String,
           dosage: String, // الجرعات
           frequency: Number, // المرات ف اليوم الواحد
           duration: Number, // كام اسبوع
-          notes: String,
         },
       ],
       prescriptionStatus: {
