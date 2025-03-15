@@ -94,7 +94,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     let credentials = req.body;
-    let getDoctor = await doctor.findById(credentials.doctorId);
+    let getDoctor = await doctor.findOne({ doctorEmail: credentials.doctorEmail });
     if (!getDoctor) {
       return res.status(400).json({ error: "Doctor not found" });
     }
