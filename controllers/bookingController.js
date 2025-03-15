@@ -657,38 +657,24 @@ const createFollowUpAppointment = async (req, res) => {
     const patient = await Patient.findById(patientId);
     if (!patient) throw "Patient not found";
 
-    // Find the selected clinic within the doctor's clinics
-    const clinic = doctor.clinic.find((c) => c._id.toString() === clinicId);
-    if (!clinic) throw "Invalid clinic ID for this doctor";
+    // Check if patient has had a previous appointment with this doctor
+    const previousAppointment = await Appointments.findOne({
+      patientId: patientId,
+      doctorId: doctor._id,
+      status: "Completed",  // Only consider completed appointments
+      appointmentDate: { $lt: new Date() }  // Only consider past appointments
+    });
 
-    // Get the count of existing appointments for this date
+    if (!previousAppointment) {
+      throw "Cannot create follow-up: No previous appointments found with this patient";
+    }
+
+    // Check for same day appointments
     const startOfDay = new Date(appointmentDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(appointmentDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const existingAppointmentsCount = await Appointments.countDocuments({
-      clinicId,
-      appointmentDate: {
-        $gte: startOfDay,
-        $lte: endOfDay
-      }
-    });
-
-    // Check if we've reached the maximum number of bookings for this day
-    const workDay = clinic.clinicWorkDays.find(day => 
-      day.day === new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long' })
-    );
-
-    if (!workDay) {
-      throw "Clinic is not open on this day";
-    }
-
-    if (existingAppointmentsCount >= workDay.NoBookings) {
-      throw "No more booking slots available for this day";
-    }
-
-    // Check if patient already has a follow-up appointment on this date
     const existingFollowUp = await Appointments.findOne({
       patientId: patientId,
       doctorId: doctor._id,
@@ -700,20 +686,33 @@ const createFollowUpAppointment = async (req, res) => {
     });
 
     if (existingFollowUp) {
-      throw "This patient already has a follow-up appointment scheduled for this day. Please choose a different date.";
+      throw "This patient already has a follow-up appointment scheduled for this day";
     }
 
-    // Also check for any other appointments the patient might have on this day
-    const existingPatientAppointment = await Appointments.findOne({
-      patientId: patientId,
+    // Find the selected clinic within the doctor's clinics
+    const clinic = doctor.clinic.find((c) => c._id.toString() === clinicId);
+    if (!clinic) throw "Invalid clinic ID for this doctor";
+
+    // Get existing appointments count for this date
+    const existingAppointmentsCount = await Appointments.countDocuments({
+      clinicId,
       appointmentDate: {
         $gte: startOfDay,
         $lte: endOfDay
       }
     });
 
-    if (existingPatientAppointment) {
-      throw "This patient already has an appointment scheduled for this day. Please choose a different date.";
+    // Check clinic availability
+    const workDay = clinic.clinicWorkDays.find(day => 
+      day.day === new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long' })
+    );
+
+    if (!workDay) {
+      throw "Clinic is not open on this day";
+    }
+
+    if (existingAppointmentsCount >= workDay.NoBookings) {
+      throw "No more booking slots available for this day";
     }
 
     // Create the follow-up appointment
