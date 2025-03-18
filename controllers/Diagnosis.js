@@ -38,10 +38,18 @@ import { v4 as uuidv4 } from 'uuid';
     if (!token) {
       throw "Token not found"
     }
-    const decoded = jwt.verify(token, process.env.JWT_KEY)
-    const email = decoded.email
-    if (!email) {
-      throw "Must Login First"
+    try {
+      console.log("Current server time:", new Date());
+      console.log("Token:", token);
+      const decoded = jwt.verify(token, process.env.JWT_KEY)
+      console.log("Decoded token:", decoded);
+      const email = decoded.email
+      if (!email) {
+        throw "Must Login First"
+      }
+    } catch (error) {
+      console.log("Token verification error:", error);
+      throw "Token verification failed"
     }
 
     // Fetch Patient
@@ -131,13 +139,44 @@ const createPrescription = async (req, res) => {
   }
 };
 
- const getDiagnosis = async (req,res)=>{
-
-        const token = req.cookies.jwt
-        const decoded = jwt.verify(token, process.env.JWT_KEY);
-        const email = decoded.email;
-        let Diagnosis = await PatientModel.findOne({userEmail:email}).select("Diagnosis")
-        res.json(Diagnosis || {data : 'Not FOund'})
+ const getDiagnosis = async (req, res) => {
+  try {
+    const token = req.cookies.jwt;
+    
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_KEY);
+      
+      // Use userId instead of email for finding the patient
+      const patient = await PatientModel.findById(decoded.userId).select("Diagnosis");
+      
+      if (!patient) {
+        return res.status(404).json({ error: "Patient not found" });
+      }
+      
+      res.json(patient || { data: 'Not Found' });
+      
+    } catch (jwtError) {
+      console.log("JWT Error:", jwtError);
+      
+      // Clear the expired token
+      res.clearCookie('jwt');
+      
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          error: "Token expired", 
+          message: "Please log in again to refresh your session"
+        });
+      }
+      return res.status(401).json({ error: "Invalid token" });
+    }
+  } catch (error) {
+    console.log("General error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
 }
 
  const updateDiagnosis = async (req,res)=>{
@@ -253,6 +292,72 @@ const createPrescription = async (req, res) => {
     
 }
 
+const getSpecificDiagnosis = async (req, res) => {
+  try {
+    const { patientId, diagnosisId } = req.params;
+    
+    // Verify token and authorization
+    const token = req.cookies.jwt || req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_KEY);
+      
+      // Find the patient
+      const patient = await PatientModel.findById(patientId);
+      if (!patient) {
+        return res.status(404).json({ error: "Patient not found" });
+      }
+
+      // Check authorization - only allow if the requester is the patient or a doctor
+      if (decoded.role !== "Doctor" && decoded.userId !== patientId) {
+        return res.status(403).json({ error: "Not authorized to access this diagnosis" });
+      }
+
+      // Find the specific diagnosis in the array
+      const diagnosis = patient.Diagnosis.find(d => d._id.toString() === diagnosisId);
+      if (!diagnosis) {
+        return res.status(404).json({ error: "Diagnosis not found" });
+      }
+
+      // Format the response to match the expected structure
+      const formattedDiagnosis = {
+        id: diagnosis._id,
+        date: diagnosis.date,
+        doctorName: diagnosis.doctorName,
+        diagnosis: diagnosis.diagnosis,
+        treatmentPlan: diagnosis.treatmentPlan,
+        hasXray: Array.isArray(diagnosis.Xray) && diagnosis.Xray.length > 0,
+        hasLabResults: Array.isArray(diagnosis.labResults) && diagnosis.labResults.length > 0,
+        hasPrescription: !!diagnosis.prescription,
+        displayDate: new Date(diagnosis.date).toLocaleDateString(),
+        // Include all other diagnosis fields
+        ...diagnosis.toObject()
+      };
+
+      res.status(200).json({
+        status: "success",
+        data: formattedDiagnosis
+      });
+
+    } catch (jwtError) {
+      console.log("JWT Error:", jwtError);
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          error: "Token expired", 
+          message: "Please log in again to refresh your session"
+        });
+      }
+      return res.status(401).json({ error: "Invalid token" });
+    }
+  } catch (error) {
+    console.log("Error in getSpecificDiagnosis:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
 export default {
   creatDiagnosis,
     getDiagnosis,
@@ -261,5 +366,6 @@ export default {
     updatePrescription,
     deleteconsultation,
     updateconsultation,
-    createPrescription
+    createPrescription,
+    getSpecificDiagnosis
 }

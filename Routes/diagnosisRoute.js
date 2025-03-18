@@ -22,5 +22,6 @@ router.route('/consultation/:id')
 .patch(diagnosisController.updateconsultation)
 .delete(diagnosisController.deleteconsultation)
 
+router.get('/patient/:patientId/diagnosis/:diagnosisId', diagnosisController.getSpecificDiagnosis);
 
 export default router;

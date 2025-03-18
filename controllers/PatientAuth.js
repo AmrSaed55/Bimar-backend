@@ -100,7 +100,8 @@ const forgetpassword = async (req, res) => {
     const otp = generateOtp();
     const userName = patient.userName;
 
-    const token = jwt.sign({ email: userEmail }, process.env.JWT_KEY, {
+    const token = jwt.sign({ userId: patient._id }, process.env.JWT_KEY, {
+      // Include userId in token
       expiresIn: "10m",
     });
 
@@ -247,6 +248,7 @@ const resetPassword = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_KEY);
     const patient = await Patient.findById(decoded.userId);
+
     if (!patient) {
       throw "User Not Found";
     }
@@ -259,13 +261,14 @@ const resetPassword = async (req, res) => {
     );
 
     res.clearCookie("otp");
+    res.clearCookie("jwt");
 
     res
       .status(200)
       .json(
         update
-          ? (data = "Password updated")
-          : (data = "password updated failed")
+          ? { status: responseMsgs.SUCCESS, data: "Password updated" }
+          : { status: responseMsgs.FAILURE, data: "Password update failed" }
       );
   } catch (err) {
     console.log(err);
