@@ -20,12 +20,8 @@ const AppointmentsSchema = mongoose.Schema({
     type: Date,
     required: true,
   },
-  appointmentStartTime: {
-    type: Date,
-    required: true,
-  },
-  appointmentEndTime: {
-    type: Date,
+  bookingNumber: {
+    type: Number,
     required: true,
   },
   status: {
@@ -35,28 +31,18 @@ const AppointmentsSchema = mongoose.Schema({
   },
   bookingType: {
     type: String,
+    default: "first-Visit",
     enum: ["follow-up", "first-Visit"],
-  },
-  notes: {
-    type: String,
-    default: null,
   },
   paymentStatus: {
     type: String,
     enum: ["Pending", "Paid"],
     default: "Pending",
   },
-  Price: {
-    type: Number,
-    required: true,
-  },
 });
 
-AppointmentsSchema.index({
-  appointmentStartTime: 1,
-  appointmentEndTime: 1,
-  appointmentDate: 1,
-});
+// Create a compound index for date and clinic to help with booking number queries
+AppointmentsSchema.index({ appointmentDate: 1, clinicId: 1 });
 
 const Appointments = mongoose.model("Appointments", AppointmentsSchema);
 export default Appointments;
