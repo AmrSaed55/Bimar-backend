@@ -63,6 +63,7 @@ const login = async (req, res) => {
       userEmail: getPatient.userEmail,
       userName: getPatient.userName,
       userPhone: getPatient.userPhone,
+      profileImage: getPatient.profileImage,
       userHeight: getPatient.personalRecords.userHeight,
       userWeight: getPatient.personalRecords.userWeight,
       DateOfBirth: getPatient.personalRecords.DateOfBirth,

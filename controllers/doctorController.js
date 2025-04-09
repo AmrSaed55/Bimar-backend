@@ -6,6 +6,7 @@ import responseMsgs from "../utilities/responseMsgs.js";
 import errorHandler from "../utilities/errorHandler.js";
 import nodemailer from "nodemailer";
 import generateTokenAndSetCookie from "./../utilities/generateToken.js";
+import { decode } from "jsonwebtoken";
 
 // Register Function
 const register = async (req, res) => {
@@ -445,6 +446,41 @@ const getField = async (req, res) => {
   }
 };
 
+const updateDoctorImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      throw "No image file provided";
+    }
+
+    const token = req.cookies.jwt;
+    if (!token) {
+      throw "No Token Provided";
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    const Doctor = await doctor.findById(decoded.userId);
+    console.log(decoded.userId)
+    if (!Doctor) {
+      throw "Doctor not found";
+    }
+
+    // Update profile image path
+    Doctor.doctorImage = req.file.path;
+    await Doctor.save();
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: {
+        message: "Profile picture updated successfully",
+        doctorImage: doctor.doctorImage,
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
 export default {
   register,
   login,
@@ -457,4 +493,5 @@ export default {
   updateDoctor,
   updateClinic,
   getField,
+  updateDoctorImage,
 };

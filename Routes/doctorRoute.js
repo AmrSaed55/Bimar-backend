@@ -21,5 +21,7 @@ router.delete("/deleteClinic", doctorController.deleteClinic);
 router.put("/updateDoctor", doctorController.updateDoctor);
 router.put("/updateClinic", doctorController.updateClinic);
 router.post("/field", doctorController.getField);
+router.patch("/update-docorImage",uploadProfile.uploadDocProfile.single("doctorImage")
+,doctorController.updateDoctorImage)
 
 export default router;
