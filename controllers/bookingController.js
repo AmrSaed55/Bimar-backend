@@ -524,7 +524,7 @@ const cancelAppointment = async (req, res) => {
 
     const appointmentId = req.params.id;
 
-    // Get appointment details before deletion
+    // Get appointment details before update
     const appointment = await Appointments.findById(appointmentId)
       .populate("patientId", "userName userEmail")
       .populate("doctorId", "doctorName doctorEmail");
@@ -533,16 +533,15 @@ const cancelAppointment = async (req, res) => {
       throw "Appointment not found";
     }
 
-    //verify ownership
-    const isPatientOwner =
-      patient && patient._id.equals(appointment.patientId._id);
+    // Verify ownership
+    const isPatientOwner = patient && patient._id.equals(appointment.patientId._id);
     const isDoctorOwner = doctor && doctor._id.equals(appointment.doctorId._id);
 
     if (!isDoctorOwner && !isPatientOwner) {
-      throw "Unauthorized to delete this appointment";
+      throw "Unauthorized to cancel this appointment";
     }
 
-    // Get all appointments for the same day with higher booking numbers
+    // Update the booking numbers for other appointments on the same day
     const appointmentDate = new Date(appointment.appointmentDate);
     const dayStart = new Date(appointmentDate);
     dayStart.setHours(0, 0, 0, 0);
@@ -555,11 +554,14 @@ const cancelAppointment = async (req, res) => {
         $gte: dayStart,
         $lte: dayEnd
       },
+      status: { $ne: "cancelled" }, // Only update active appointments
       bookingNumber: { $gt: appointment.bookingNumber }
     });
 
-    // Delete the appointment first
-    await Appointments.findByIdAndDelete(appointmentId);
+    // Update the appointment status to cancelled
+    await Appointments.findByIdAndUpdate(appointmentId, {
+      status: "cancelled"
+    });
 
     // Update booking numbers for remaining appointments
     for (const apt of appointmentsToUpdate) {
@@ -584,53 +586,53 @@ const cancelAppointment = async (req, res) => {
       bookingNumber: appointment.bookingNumber
     };
 
-    // Try to send emails
-    try {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        port: parseInt(process.env.EMAIL_PORT) || 587,
-        auth: {
-          user: process.env.USER,
-          pass: process.env.PASS,
-        },
-      });
-
-      // Array to store email sending promises
-      const emailPromises = [];
-
-      // Only send patient email if we have a valid patient email
-      if (emailData.patientEmail) {
-        const patientMailOptions = {
-          from: "bimar.med24@gmail.com",
-          to: emailData.patientEmail,
-          subject: "Appointment Cancellation",
-          html: ``,
-        };
-        emailPromises.push(transporter.sendMail(patientMailOptions));
+      // Try to send emails
+      try {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          port: parseInt(process.env.EMAIL_PORT) || 587,
+          auth: {
+            user: process.env.USER,
+            pass: process.env.PASS,
+          },
+        });
+  
+        // Array to store email sending promises
+        const emailPromises = [];
+  
+        // Only send patient email if we have a valid patient email
+        if (emailData.patientEmail) {
+          const patientMailOptions = {
+            from: "bimar.med24@gmail.com",
+            to: emailData.patientEmail,
+            subject: "Appointment Cancellation",
+            html: ``,
+          };
+          emailPromises.push(transporter.sendMail(patientMailOptions));
+        }
+  
+        // Only send doctor email if we have a valid doctor email
+        if (emailData.doctorEmail) {
+          const doctorMailOptions = {
+            from: "bimar.med24@gmail.com",
+            to: emailData.doctorEmail,
+            subject: "Appointment Cancellation Notice",
+            html: ``,
+          };
+          emailPromises.push(transporter.sendMail(doctorMailOptions));
+        }
+  
+        // Send all valid emails
+        if (emailPromises.length > 0) {
+          await Promise.all(emailPromises);
+          console.log("Cancellation notification emails sent successfully");
+        } else {
+          console.log("No valid email recipients found");
+        }
+      } catch (emailError) {
+        // Log email sending error but don't affect the main operation
+        console.log("Error sending cancellation emails:", emailError);
       }
-
-      // Only send doctor email if we have a valid doctor email
-      if (emailData.doctorEmail) {
-        const doctorMailOptions = {
-          from: "bimar.med24@gmail.com",
-          to: emailData.doctorEmail,
-          subject: "Appointment Cancellation Notice",
-          html: ``,
-        };
-        emailPromises.push(transporter.sendMail(doctorMailOptions));
-      }
-
-      // Send all valid emails
-      if (emailPromises.length > 0) {
-        await Promise.all(emailPromises);
-        console.log("Cancellation notification emails sent successfully");
-      } else {
-        console.log("No valid email recipients found");
-      }
-    } catch (emailError) {
-      // Log email sending error but don't affect the main operation
-      console.log("Error sending cancellation emails:", emailError);
-    }
   } catch (err) {
     console.log(err);
     errorHandler(res, err);
@@ -770,10 +772,53 @@ const createFollowUpAppointment = async (req, res) => {
   }
 };
 
+// Modify the deleteAppointment function to only allow the doctor who created the appointment
+const deleteAppointment = async (req, res) => {
+  try {
+    const token = req.cookies.jwt;
+    if (!token) {
+      throw "Token not provided";
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    const doctorId = decoded.userId;
+
+    // Verify the user is a doctor
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      throw "Unauthorized: Only doctors can delete appointments";
+    }
+
+    const appointmentId = req.params.id;
+    const appointment = await Appointments.findById(appointmentId);
+    
+    if (!appointment) {
+      throw "Appointment not found";
+    }
+
+    // Check if this doctor owns the appointment
+    if (!appointment.doctorId.equals(doctorId)) {
+      throw "Unauthorized: You can only delete appointments you created";
+    }
+
+    // Delete the appointment
+    await Appointments.findByIdAndDelete(appointmentId);
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      message: "Appointment permanently deleted",
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
 export default {
   createAppointemnt,
   getAppointments,
   updateAppointment,
   cancelAppointment,
-  createFollowUpAppointment
+  createFollowUpAppointment,
+  deleteAppointment
 };
