@@ -554,13 +554,13 @@ const cancelAppointment = async (req, res) => {
         $gte: dayStart,
         $lte: dayEnd
       },
-      status: { $ne: "cancelled" }, // Only update active appointments
+      status: { $ne: "Cancelled" }, // Only update active appointments
       bookingNumber: { $gt: appointment.bookingNumber }
     });
 
     // Update the appointment status to cancelled
     await Appointments.findByIdAndUpdate(appointmentId, {
-      status: "cancelled"
+      status: "Cancelled",
     });
 
     // Update booking numbers for remaining appointments
