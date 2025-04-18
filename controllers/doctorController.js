@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 import responseMsgs from "../utilities/responseMsgs.js";
 import errorHandler from "../utilities/errorHandler.js";
 import nodemailer from "nodemailer";
-import generateTokenAndSetCookie from "./../utilities/generateToken.js";
 import { decode } from "jsonwebtoken";
 
 // Register Function
@@ -79,7 +78,6 @@ const register = async (req, res) => {
     };
 
     if (addDoctor) {
-      generateTokenAndSetCookie(addDoctor._id, "Doctor", res);
       await transporter.sendMail(mailOptions);
       res.status(201).json({
         status: responseMsgs.SUCCESS,
@@ -87,7 +85,7 @@ const register = async (req, res) => {
       });
     }
   } catch (er) {
-    console.log("Error in register DOCTOR controller", er.message);
+    console.log("Error in register DOCTOR controller", er);
     errorHandler(res, er);
   }
 };
@@ -97,7 +95,7 @@ const login = async (req, res) => {
     let credentials = req.body;
     let getDoctor = await doctor.findOne({ doctorEmail: credentials.doctorEmail });
     if (!getDoctor) {
-      return res.status(400).json({ error: "Doctor not found" });
+      throw "User Not Found";
     }
 
     let checkPassword = await bcrypt.compare(
@@ -105,20 +103,22 @@ const login = async (req, res) => {
       getDoctor.doctorPassword
     );
     if (!checkPassword) {
-      return res.status(400).json({ error: "wrong password" });
+      throw "Wrong Password";
     }
 
     const doctorData = getDoctor;
 
-    generateTokenAndSetCookie(getDoctor._id, "Doctor", res);
-
-    res.status(200).json({
+    let token = jwt.sign(
+      { userId: getDoctor._id },
+      process.env.JWT_KEY
+    );
+    res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
       data: "Logged In Successfully",
       doctor: doctorData,
     });
   } catch (er) {
-    console.log("Error in login doctor controller", er.message);
+    console.log("Error in login doctor controller", er);
     errorHandler(res, er);
   }
 };

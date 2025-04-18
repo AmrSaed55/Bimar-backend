@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import responseMsgs from "./../utilities/responseMsgs.js";
 import errorHandler from "./../utilities/errorHandler.js";
-import generateTokenAndSetCookie from "./../utilities/generateToken.js";
 
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -25,17 +24,13 @@ const register = async (req, res) => {
       userPassword: hashedPassword,
     });
 
-    if (addPatient) {
-      generateTokenAndSetCookie(addPatient._id, "Patient", res);
-      res.status(201).json({
-        status: responseMsgs.SUCCESS,
-        data: "SignUp Successfully",
-      });
-    } else {
-      res.status(400).json({ error: "Invalid user data" });
-    }
+    if(addPatient){
+    res.status(201).json({
+      status: responseMsgs.SUCCESS,
+      data: "SignUp Successfully",
+    });}
   } catch (er) {
-    console.log("Error in register controller", er.message);
+    console.log("Error in register controller:-", er);
     errorHandler(res, er);
   }
 };
@@ -46,8 +41,9 @@ const login = async (req, res) => {
     let getPatient = await Patient.findOne({
       userEmail: credentials.userEmail,
     });
+    console.log("getPatient:-",getPatient)
     if (!getPatient) {
-      return res.status(400).json({ error: "User not found" });
+      throw "User Not Found";
     }
 
     let checkPassword = await bcrypt.compare(
@@ -55,7 +51,7 @@ const login = async (req, res) => {
       getPatient.userPassword
     );
     if (!checkPassword) {
-      return res.status(400).json({ error: "wrong password" });
+      throw "Wrong Password";
     }
 
     const patientData = {
@@ -73,15 +69,21 @@ const login = async (req, res) => {
       bloodType: getPatient.medicalRecord.bloodType,
     };
 
-    generateTokenAndSetCookie(getPatient._id, "Patient", res);
-
-    res.status(200).json({
+    let token = jwt.sign(
+      {
+        userId: getPatient._id,
+      },
+      process.env.JWT_KEY
+    );
+    console.log("lOgin token :- ",token)
+    res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
       data: "Logged In Successfully",
       patient: patientData,
     });
+   
   } catch (er) {
-    console.log("Error in login controller", er.message);
+    console.log("Error in login controller", er);
     errorHandler(res, er);
   }
 };

@@ -38,22 +38,33 @@ import { v4 as uuidv4 } from 'uuid';
     if (!token) {
       throw "Token not found"
     }
+    
+    let id;
     try {
       console.log("Current server time:", new Date());
       console.log("Token:", token);
       const decoded = jwt.verify(token, process.env.JWT_KEY)
       console.log("Decoded token:", decoded);
-      const email = decoded.email
-      if (!email) {
-        throw "Must Login First"
+      
+      // Handle different token structures (some might have userId, others might have email)
+      id = decoded.userId 
+      console.log("id:",id)
+      
+      if (!id) {
+        throw "User ID not found in token"
       }
     } catch (error) {
       console.log("Token verification error:", error);
+      if (error.name === 'TokenExpiredError') {
+        res.clearCookie('jwt');
+        throw "Token expired, please login again"
+      }
       throw "Token verification failed"
     }
 
     // Fetch Patient
-    const patient = await PatientModel.findOne({ userEmail: email })
+    const patient = await PatientModel.findOne({ _id: id })
+    console.log("patient:",patient)
     if (!patient) {
       throw "Patient Not Found"
     }
@@ -68,7 +79,7 @@ import { v4 as uuidv4 } from 'uuid';
 
     if (!isFollowup) {
       await PatientModel.updateOne(
-        { userEmail: email, "Diagnosis._id": patient.Diagnosis[patient.Diagnosis.length - 1]._id },
+        { _id: id, "Diagnosis._id": patient.Diagnosis[patient.Diagnosis.length - 1]._id },
         { $unset: { "Diagnosis.$.consultations": "" } }
       );
     }
@@ -141,8 +152,7 @@ const createPrescription = async (req, res) => {
 
  const getDiagnosis = async (req, res) => {
   try {
-    const token = req.cookies.jwt;
-    
+    const token = req.cookies.jwt;    
     if (!token) {
       return res.status(401).json({ error: "No token provided" });
     }

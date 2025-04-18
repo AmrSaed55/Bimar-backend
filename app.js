@@ -50,7 +50,7 @@ const __dirname = path.dirname(__filename);
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://192.168.1.8:3000"], // Add your frontend origins
+    origin: "http://localhost:5173", // Add your frontend origins
     credentials: true,
   })
 );
