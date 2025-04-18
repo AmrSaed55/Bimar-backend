@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post(
   "/patientRegister",
-  patientvalidator.userValidation(),
+ 
   PatinetAuthController.register
 );
 router.post("/patientLogin", PatinetAuthController.login);
