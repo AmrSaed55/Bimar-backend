@@ -39,32 +39,14 @@ import { v4 as uuidv4 } from 'uuid';
       throw "Token not found"
     }
     
-    let id;
-    try {
-      console.log("Current server time:", new Date());
-      console.log("Token:", token);
       const decoded = jwt.verify(token, process.env.JWT_KEY)
-      console.log("Decoded token:", decoded);
-      
-      // Handle different token structures (some might have userId, others might have email)
-      id = decoded.userId 
-      console.log("id:",id)
-      
-      if (!id) {
-        throw "User ID not found in token"
-      }
-    } catch (error) {
-      console.log("Token verification error:", error);
-      if (error.name === 'TokenExpiredError') {
-        res.clearCookie('jwt');
-        throw "Token expired, please login again"
-      }
-      throw "Token verification failed"
+      const userId = decoded.userId
+      if (!userId) {
+        throw "Must Login First"
     }
 
     // Fetch Patient
-    const patient = await PatientModel.findOne({ _id: id })
-    console.log("patient:",patient)
+    const patient = await PatientModel.findOne({ _id: userId })
     if (!patient) {
       throw "Patient Not Found"
     }
@@ -76,10 +58,11 @@ import { v4 as uuidv4 } from 'uuid';
     // Save Diagnosis
     patient.Diagnosis.push(newDiagnosis)
     await patient.save()
+  
 
     if (!isFollowup) {
       await PatientModel.updateOne(
-        { _id: id, "Diagnosis._id": patient.Diagnosis[patient.Diagnosis.length - 1]._id },
+        { _id: userId, "Diagnosis._id": patient.Diagnosis[patient.Diagnosis.length - 1]._id },
         { $unset: { "Diagnosis.$.consultations": "" } }
       );
     }
@@ -109,19 +92,19 @@ const createPrescription = async (req, res) => {
     // Create a new diagnosis entry with the prescription data and other fields set to null
     const newDiagnosis = {
       date: new Date(),
-      doctorName: null,
-      doctorPhone: null,
-      diagnosis: [],
-      treatmentPlan: null,
+      doctorName: prescriptionData.doctorName || null,
+      doctorPhone: prescriptionData.doctorPhone || null,
+      diagnosis: prescriptionData.diagnosis || [],
+      treatmentPlan: prescriptionData.treatmentPlan || null,
       Xray: [],
       labResults: [],
       prescription: {
         prescriptionId: uuidv4(),
         prescriptionDate: new Date(),
-        followUpDate: prescriptionData.followUpDate,
-        notes: prescriptionData.notes,
-        prescriptionInstruction: prescriptionData.prescriptionInstruction,
-        prescriptionStatus: "Pending",
+        followUpDate: prescriptionData.prescription.followUpDate,
+        notes: prescriptionData.prescription.notes,
+        prescriptionInstruction: prescriptionData.prescription.prescriptionInstruction,
+        prescriptionStatus: prescriptionData.prescription.status || "Pending",
       },
       
       consultations: [],

@@ -41,7 +41,6 @@ const login = async (req, res) => {
     let getPatient = await Patient.findOne({
       userEmail: credentials.userEmail,
     });
-    console.log("getPatient:-",getPatient)
     if (!getPatient) {
       throw "User Not Found";
     }
