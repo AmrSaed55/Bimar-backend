@@ -2,109 +2,885 @@ from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
 import os
+from sklearn.preprocessing import LabelEncoder
 
 app = Flask(__name__)
 
-# Disease-to-specialist mapping
 disease_to_specialist = {
-    "Allergy": "Allergist",  # أخصائي الحساسية
-    "Peptic ulcer disease": "Gastroenterologist",  # أخصائي الجهاز الهضمي
-    "Chronic cholestasis": "Hepatologist",  # أخصائي الكبد
-    "Diabetes": "Endocrinologist",  # أخصائي الغدد الصماء
-    "Bronchial Asthma": "Pulmonologist",  # أخصائي الرئة
-    "Hypertension": "Cardiologist",  # أخصائي القلب
-    "Migraine": "Neurologist",  # أخصائي الأعصاب
-    "Cervical spondylosis": "Physical Medicine and Rehabilitation",  # الطب الطبيعي وإعادة التأهيل
-    "Paralysis (brain hemorrhage)": "Neurologist",  # أخصائي الأعصاب
-    "Jaundice": "Hepatologist",  # أخصائي الكبد
-    "Malaria": "Internal Medicine",  # الطب الباطني
-    "Chicken pox": "Internal Medicine",  # الطب الباطني
-    "Dengue": "Internal Medicine",  # الطب الباطني
-    "Typhoid": "Internal Medicine",  # الطب الباطني
-    "Hepatitis A": "Hepatologist",  # أخصائي الكبد
-    "Hepatitis B": "Hepatologist",  # أخصائي الكبد
-    "Hepatitis C": "Hepatologist",  # أخصائي الكبد
-    "Hepatitis D": "Hepatologist",  # أخصائي الكبد
-    "Hepatitis E": "Hepatologist",  # أخصائي الكبد
-    "Alcoholic hepatitis": "Hepatologist",  # أخصائي الكبد
-    "Tuberculosis": "Pulmonologist",  # أخصائي الرئة
-    "Common Cold": "Internal Medicine",  # الطب الباطني
-    "Pneumonia": "Pulmonologist",  # أخصائي الرئة
-    "Dimorphic hemorrhoids (piles)": "Gastroenterologist",  # أخصائي الجهاز الهضمي
-    "Heart attack": "Cardiologist",  # أخصائي القلب
-    "Varicose veins": "Phlebologist",  # أخصائي الأوردة
-    "Hypothyroidism": "Endocrinologist",  # أخصائي الغدد الصماء
-    "Hyperthyroidism": "Endocrinologist",  # أخصائي الغدد الصماء
-    "Hypoglycemia": "Endocrinologist",  # أخصائي الغدد الصماء
-    "Osteoarthritis": "Rheumatologist",  # أخصائي الروماتيزم
-    "Arthritis": "Rheumatologist",  # أخصائي الروماتيزم
-    "(vertigo) Paroxysmal Positional Vertigo": "Otolaryngologist",  # أخصائي الأنف والأذن والحنجرة
-    "Acne": "Dermatologist",  # أخصائي الجلدية
-    "Urinary tract infection": "Internal Medicine",  # الطب الباطني
-    "Psoriasis": "Dermatologist",  # أخصائي الجلدية
-    "Impetigo": "Dermatologist",  # أخصائي الجلدية
-    "Fungal infection": "Dermatologist",  # أخصائي الجلدية
-    "GERD": "Gastroenterologist",  # أخصائي الجهاز الهضمي
+  # A
+  "abdominal aortic aneurysm": "Internal Medicine",
+  "abdominal hernia": "Gastroenterologist",
+  "abscess of nose": "Otolaryngologist",
+  "abscess of the lung": "Pulmonologist",
+  "abscess of the pharynx": "Otolaryngologist",
+  "acanthosis nigricans": "Dermatologist",
+  "acariasis": "Dermatologist",
+  "achalasia": "Gastroenterologist",
+  "acne": "Dermatologist",
+  "actinic keratosis": "Dermatologist",
+  "acute bronchiolitis": "Pulmonologist",
+  "acute bronchitis": "Pulmonologist",
+  "acute bronchospasm": "Pulmonologist",
+  "acute fatty liver of pregnancy (aflp)": "Gynecologist",
+  "acute glaucoma": "Ophthalmologist",
+  "acute kidney injury": "Internal Medicine",
+  "acute otitis media": "Otolaryngologist",
+  "acute pancreatitis": "Gastroenterologist",
+  "acute respiratory distress syndrome (ards)": "Pulmonologist",
+  "acute sinusitis": "Otolaryngologist",
+  "acute stress reaction": "Psychiatry",
+  "adhesive capsulitis of the shoulder": "Physical Medicine and Rehabilitation",
+  "adjustment reaction": "Psychiatry",
+  "adrenal adenoma": "Endocrinologist",
+  "adrenal cancer": "Endocrinologist",
+  "alcohol abuse": "Psychiatry",
+  "alcohol intoxication": "Psychiatry",
+  "alcohol withdrawal": "Psychiatry",
+  "alcoholic liver disease": "Hepatologist",
+  "allergy": "Allergist",
+  "allergy to animals": "Allergist",
+  "alopecia": "Dermatologist",
+  "alzheimer disease": "Neurologist",
+  "amblyopia": "Ophthalmologist",
+  "amyloidosis": "Neurologist",
+  "amyotrophic lateral sclerosis (als)": "Neurologist",
+  "anal fissure": "Gastroenterologist",
+  "anal fistula": "Gastroenterologist",
+  "anemia": "Internal Medicine",
+  "anemia due to chronic kidney disease": "Internal Medicine",
+  "anemia due to malignancy": "Internal Medicine",
+  "anemia of chronic disease": "Internal Medicine",
+  "angina": "Cardiologist",
+  "ankylosing spondylitis": "Rheumatologist",
+  "anxiety": "Psychiatry",
+  "aphakia": "Ophthalmologist",
+  "aphthous ulcer": "Dentistry",
+  "aplastic anemia": "Internal Medicine",
+  "appendicitis": "Gastroenterologist",
+  "arrhythmia": "Cardiologist",
+  "arthritis of the hip": "Rheumatologist",
+  "ascending cholangitis": "Gastroenterologist",
+  "asperger syndrome": "Psychiatry",
+  "aspergillosis": "Infectious Disease Specialist",
+  "asthma": "Allergist",
+  "astigmatism": "Ophthalmologist",
+  "atelectasis": "Pulmonologist",
+  "athlete's foot": "Dermatologist",
+  "atonic bladder": "Urologist",
+  "atophic skin condition": "Dermatologist",
+  "atrial fibrillation": "Cardiologist",
+  "atrial flutter": "Cardiologist",
+  "atrophic vaginitis": "Gynecologist",
+  "atrophy of the corpus cavernosum": "Urologist",
+  "attention deficit hyperactivity disorder (adhd)": "Psychiatry",
+  "autism": "Psychiatry",
+  "autonomic nervous system disorder": "Neurologist",
+  "avascular necrosis": "Orthopedic Surgeon",
+  
+  # B
+  "balanitis": "Urologist",
+  "bell palsy": "Neurologist",
+  "benign kidney cyst": "Internal Medicine",
+  "benign paroxysmal positional vertical (bppv)": "Neurologist",
+  "benign prostatic hyperplasia (bph)": "Urologist",
+  "benign vaginal discharge (leukorrhea)": "Gynecologist",
+  "bipolar disorder": "Psychiatry",
+  "birth trauma": "Pediatrician",
+  "bladder cancer": "Urologist",
+  "bladder disorder": "Urologist",
+  "bladder obstruction": "Urologist",
+  "blepharitis": "Ophthalmologist",
+  "blepharospasm": "Ophthalmologist",
+  "bone cancer": "Orthopedic Surgeon",
+  "bone disorder": "Orthopedic Surgeon",
+  "bone spur of the calcaneous": "Physical Medicine and Rehabilitation",
+  "brachial neuritis": "Neurologist",
+  "brain cancer": "Neurologist",
+  "breast cancer": "Internal Medicine",
+  "breast cyst": "Internal Medicine",
+  "breast infection (mastitis)": "Internal Medicine",
+  "broken tooth": "Dentistry",
+  "bunion": "Physical Medicine and Rehabilitation",
+  "burn": "Plastic Surgery",
+  "bursitis": "Rheumatologist",
+  
+  # C
+  "callus": "Dermatologist",
+  "carbon monoxide poisoning": "Internal Medicine",
+  "carcinoid syndrome": "Internal Medicine",
+  "cardiac arrest": "Cardiologist",
+  "cardiomyopathy": "Cardiologist",
+  "carpal tunnel syndrome": "Physical Medicine and Rehabilitation",
+  "cat scratch disease": "Infectious Disease Specialist",
+  "cataract": "Ophthalmologist",
+  "celiac disease": "Gastroenterologist",
+  "cellulitis": "Dermatologist",
+  "cellulitis or abscess of mouth": "Dentistry",
+  "central atherosclerosis": "Internal Medicine",
+  "central retinal artery or vein occlusion": "Ophthalmologist",
+  "cerebral edema": "Neurologist",
+  "cerebral palsy": "Neurologist",
+  "cervical cancer": "Gynecologist",
+  "cervical disorder": "Gynecologist",
+  "cervicitis": "Gynecologist",
+  "chalazion": "Ophthalmologist",
+  "chickenpox": "Pediatrician",
+  "chlamydia": "Gynecologist",
+  "choledocholithiasis": "Gastroenterologist",
+  "cholecystitis": "Gastroenterologist",
+  "cholesteatoma": "Otolaryngologist",
+  "chondromalacia of the patella": "Physical Medicine and Rehabilitation",
+  "chorioretinitis": "Ophthalmologist",
+  "chronic back pain": "Rheumatologist",
+  "chronic bronchitis": "Pulmonologist",
+  "chronic constipation": "Gastroenterologist",
+  "chronic glaucoma": "Ophthalmologist",
+  "chronic inflammatory demyelinating polyneuropathy (cidp)": "Neurologist",
+  "chronic kidney disease": "Internal Medicine",
+  "chronic knee pain": "Rheumatologist",
+  "chronic obstructive pulmonary disease (copd)": "Pulmonologist",
+  "chronic otitis media": "Otolaryngologist",
+  "chronic pain disorder": "Rheumatologist",
+  "chronic pancreatitis": "Gastroenterologist",
+  "chronic rheumatic fever": "Rheumatologist",
+  "chronic sinusitis": "Otolaryngologist",
+  "chronic ulcer": "Internal Medicine",
+  "cirrhosis": "Hepatologist",
+  "coagulation (bleeding) disorder": "Internal Medicine",
+  "cold sore": "Dermatologist",
+  "colonic polyp": "Gastroenterologist",
+  "colorectal cancer": "Gastroenterologist",
+  "common cold": "Internal Medicine",
+  "complex regional pain syndrome": "Physical Medicine and Rehabilitation",
+  "concussion": "Neurologist",
+  "conduct disorder": "Psychiatry",
+  "conductive hearing loss": "Otolaryngologist",
+  "congenital heart defect": "Cardiologist",
+  "congenital malformation syndrome": "Pediatrician",
+  "conjunctivitis": "Ophthalmologist",
+  "conjunctivitis due to allergy": "Ophthalmologist",
+  "conjunctivitis due to bacteria": "Ophthalmologist",
+  "conjunctivitis due to virus": "Ophthalmologist",
+  "connective tissue disorder": "Rheumatologist",
+  "contact dermatitis": "Dermatologist",
+  "conversion disorder": "Psychiatry",
+  "cornea infection": "Ophthalmologist",
+  "corneal abrasion": "Ophthalmologist",
+  "corneal disorder": "Ophthalmologist",
+  "coronary atherosclerosis": "Cardiologist",
+  "cranial nerve palsy": "Neurologist",
+  "crohn disease": "Gastroenterologist",
+  "croup": "Pediatrician",
+  "crushing injury": "Plastic Surgery",
+  "cryptococcosis": "Infectious Disease Specialist",
+  "cryptorchidism": "Urologist",
+  "cushing syndrome": "Endocrinologist",
+  "cyst of the eyelid": "Ophthalmologist",
+  "cystic fibrosis": "Pulmonologist",
+  "cysticercosis": "Infectious Disease Specialist",
+  "cystitis": "Urologist",
+  
+  # D
+  "de quervain disease": "Physical Medicine and Rehabilitation",
+  "decubitus ulcer": "Internal Medicine",
+  "deep vein thrombosis (dvt)": "Phlebologist",
+  "degenerative disc disease": "Physical Medicine and Rehabilitation",
+  "delirium": "Psychiatry",
+  "dementia": "Neurologist",
+  "dengue fever": "Infectious Disease Specialist",
+  "dental caries": "Dentistry",
+  "depression": "Psychiatry",
+  "dermatitis due to sun exposure": "Dermatologist",
+  "developmental disability": "Psychiatry",
+  "deviated nasal septum": "Otolaryngologist",
+  "diabetes": "Endocrinologist",
+  "diabetes insipidus": "Endocrinologist",
+  "diabetic ketoacidosis": "Endocrinologist",
+  "diabetic kidney disease": "Endocrinologist",
+  "diabetic peripheral neuropathy": "Endocrinologist",
+  "diabetic retinopathy": "Ophthalmologist",
+  "diaper rash": "Dermatologist",
+  "dislocation of the ankle": "Orthopedic Surgeon",
+  "dislocation of the elbow": "Orthopedic Surgeon",
+  "dislocation of the finger": "Orthopedic Surgeon",
+  "dislocation of the foot": "Orthopedic Surgeon",
+  "dislocation of the hip": "Orthopedic Surgeon",
+  "dislocation of the knee": "Orthopedic Surgeon",
+  "dislocation of the patella": "Orthopedic Surgeon",
+  "dislocation of the shoulder": "Orthopedic Surgeon",
+  "dislocation of the vertebra": "Orthopedic Surgeon",
+  "dislocation of the wrist": "Orthopedic Surgeon",
+  "dissociative disorder": "Psychiatry",
+  "diverticulitis": "Gastroenterologist",
+  "diverticulosis": "Gastroenterologist",
+  "down syndrome": "Pediatrician",
+  "drug abuse": "Psychiatry",
+  "drug abuse (barbiturates)": "Psychiatry",
+  "drug abuse (cocaine)": "Psychiatry",
+  "drug abuse (methamphetamine)": "Psychiatry",
+  "drug abuse (opioids)": "Psychiatry",
+  "drug poisoning due to medication": "Internal Medicine",
+  "drug reaction": "Internal Medicine",
+  "drug withdrawal": "Psychiatry",
+  "dumping syndrome": "Gastroenterologist",
+  "dyshidrosis": "Dermatologist",
+  "dysthymic disorder": "Psychiatry",
+  
+  # E
+  "ear drum damage": "Otolaryngologist",
+  "ear wax impaction": "Otolaryngologist",
+  "eating disorder": "Psychiatry",
+  "ectopic pregnancy": "Gynecologist",
+  "ectropion": "Ophthalmologist",
+  "eczema": "Dermatologist",
+  "edward syndrome": "Pediatrician",
+  "emphysema": "Pulmonologist",
+  "empyema": "Pulmonologist",
+  "encephalitis": "Neurologist",
+  "endocarditis": "Cardiologist",
+  "endometrial cancer": "Gynecologist",
+  "endometrial hyperplasia": "Gynecologist",
+  "endometriosis": "Gynecologist",
+  "endophthalmitis": "Ophthalmologist",
+  "envenomation from spider or animal bite": "Plastic Surgery",
+  "ependymoma": "Neurologist",
+  "epidural hemorrhage": "Neurologist",
+  "epilepsy": "Neurologist",
+  "epididymitis": "Urologist",
+  "erectile dysfunction": "Urologist",
+  "erythema multiforme": "Dermatologist",
+  "esophageal cancer": "Gastroenterologist",
+  "esophageal varices": "Gastroenterologist",
+  "esophagitis": "Gastroenterologist",
+  "essential tremor": "Neurologist",
+  "eustachian tube dysfunction (ear disorder)": "Otolaryngologist",
+  "extrapyramidal effect of drugs": "Neurologist",
+  "eye alignment disorder": "Ophthalmologist",
+  
+  # F
+  "factitious disorder": "Psychiatry",
+  "female genitalia infection": "Gynecologist",
+  "female infertility of unknown cause": "Gynecologist",
+  "fetal alcohol syndrome": "Pediatrician",
+  "fibroadenoma": "Internal Medicine",
+  "fibrocystic breast disease": "Internal Medicine",
+  "fibromyalgia": "Rheumatologist",
+  "flat feet": "Physical Medicine and Rehabilitation",
+  "floaters": "Ophthalmologist",
+  "fluid overload": "Internal Medicine",
+  "folate deficiency": "Internal Medicine",
+  "food allergy": "Allergist",
+  "foreign body in the ear": "Otolaryngologist",
+  "foreign body in the eye": "Ophthalmologist",
+  "foreign body in the gastrointestinal tract": "Gastroenterologist",
+  "foreign body in the nose": "Otolaryngologist",
+  "foreign body in the throat": "Otolaryngologist",
+  "foreign body in the vagina": "Gynecologist",
+  "fracture of the ankle": "Orthopedic Surgeon",
+  "fracture of the arm": "Orthopedic Surgeon",
+  "fracture of the facial bones": "Orthopedic Surgeon",
+  "fracture of the finger": "Orthopedic Surgeon",
+  "fracture of the foot": "Orthopedic Surgeon",
+  "fracture of the hand": "Orthopedic Surgeon",
+  "fracture of the jaw": "Dentistry",
+  "fracture of the leg": "Orthopedic Surgeon",
+  "fracture of the neck": "Orthopedic Surgeon",
+  "fracture of the patella": "Orthopedic Surgeon",
+  "fracture of the pelvis": "Orthopedic Surgeon",
+  "fracture of the rib": "Orthopedic Surgeon",
+  "fracture of the shoulder": "Orthopedic Surgeon",
+  "fracture of the skull": "Orthopedic Surgeon",
+  "fracture of the vertebra": "Orthopedic Surgeon",
+  "friedrich ataxia": "Neurologist",
+  "frostbite": "Plastic Surgery",
+  "fungal infection of the hair": "Dermatologist",
+  "fungal infection of the skin": "Dermatologist",
+  
+  # G
+  "g6pd enzyme deficiency": "Internal Medicine",
+  "galactorrhea of unknown cause": "Endocrinologist",
+  "gallstone": "Gastroenterologist",
+  "ganglion cyst": "Physical Medicine and Rehabilitation",
+  "gas gangrene": "Infectious Disease Specialist",
+  "gastritis": "Gastroenterologist",
+  "gastroduodenal ulcer": "Gastroenterologist",
+  "gastroesophageal reflux disease (gerd)": "Gastroenterologist",
+  "gastrointestinal hemorrhage": "Gastroenterologist",
+  "gastroparesis": "Gastroenterologist",
+  "genital herpes": "Dermatologist",
+  "gestational diabetes": "Endocrinologist",
+  "glaucoma": "Ophthalmologist",
+  "glucocorticoid deficiency": "Endocrinologist",
+  "goiter": "Endocrinologist",
+  "gonorrhea": "Infectious Disease Specialist",
+  "gout": "Rheumatologist",
+  "granuloma inguinale": "Infectious Disease Specialist",
+  "graves disease": "Endocrinologist",
+  "guillain barre syndrome": "Neurologist",
+  "gum disease": "Dentistry",
+  "gynecomastia": "Endocrinologist",
+  
+  # H
+  "hammer toe": "Physical Medicine and Rehabilitation",
+  "hashimoto thyroiditis": "Endocrinologist",
+  "head and neck cancer": "Otolaryngologist",
+  "head injury": "Neurologist",
+  "headache after lumbar puncture": "Neurologist",
+  "heart attack": "Cardiologist",
+  "heart block": "Cardiologist",
+  "heart contusion": "Cardiologist",
+  "heart failure": "Cardiologist",
+  "heat exhaustion": "Internal Medicine",
+  "heat stroke": "Internal Medicine",
+  "hemarthrosis": "Neurologist",
+  "hematoma": "Internal Medicine",
+  "hemochromatosis": "Hepatologist",
+  "hemolytic anemia": "Internal Medicine",
+  "hemophilia": "Internal Medicine",
+  "hemorrhoids": "Gastroenterologist",
+  "hepatic encephalopathy": "Hepatologist",
+  "hepatitis due to a toxin": "Hepatologist",
+  "herpangina": "Infectious Disease Specialist",
+  "herniated disk": "Physical Medicine and Rehabilitation",
+  "hiatal hernia": "Gastroenterologist",
+  "hidradenitis suppurativa": "Dermatologist",
+  "hirschsprung disease": "Pediatrician",
+  "hirsutism": "Dermatologist",
+  "histoplasmosis": "Infectious Disease Specialist",
+  "hiv": "Infectious Disease Specialist",
+  "hormone disorder": "Endocrinologist",
+  "human immunodeficiency virus infection (hiv)": "Infectious Disease Specialist",
+  "huntington disease": "Neurologist",
+  "hydatidiform mole": "Gynecologist",
+  "hydrocele of the testicle": "Urologist",
+  "hydrocephalus": "Neurologist",
+  "hydronephrosis": "Internal Medicine",
+  "hyperemesis gravidarum": "Gynecologist",
+  "hypercalcemia": "Endocrinologist",
+  "hypercholesterolemia": "Endocrinologist",
+  "hypergammaglobulinemia": "Internal Medicine",
+  "hyperkalemia": "Endocrinologist",
+  "hyperlipidemia": "Endocrinologist",
+  "hypernatremia": "Endocrinologist",
+  "hyperosmotic hyperketotic state": "Endocrinologist",
+  "hyperopia": "Ophthalmologist",
+  "hyperhidrosis": "Dermatologist",
+  "hypertension of pregnancy": "Gynecologist",
+  "hypertensive heart disease": "Cardiologist",
+  "hypertrophic obstructive cardiomyopathy (hocm)": "Cardiologist",
+  "hypocalcemia": "Endocrinologist",
+  "hypoglycemia": "Endocrinologist",
+  "hypokalemia": "Endocrinologist",
+  "hyponatremia": "Endocrinologist",
+  "hypothermia": "Internal Medicine",
+  "hypothyroidism": "Endocrinologist",
+  "hypovolemia": "Internal Medicine",
+  
+  # I
+  "idiopathic absence of menstruation": "Gynecologist",
+  "idiopathic excessive menstruation": "Gynecologist",
+  "idiopathic infrequent menstruation": "Gynecologist",
+  "idiopathic irregular menstrual cycle": "Gynecologist",
+  "idiopathic nonmenstrual bleeding": "Gynecologist",
+  "idiopathic painful menstruation": "Gynecologist",
+  "ileus": "Gastroenterologist",
+  "impetigo": "Dermatologist",
+  "impulse control disorder": "Psychiatry",
+  "induced abortion": "Gynecologist",
+  "indigestion": "Gastroenterologist",
+  "infection of open wound": "Plastic Surgery",
+  "infectious gastroenteritis": "Gastroenterologist",
+  "ingrown toe nail": "Dermatologist",
+  "inguinal hernia": "Gastroenterologist",
+  "injury of the ankle": "Physical Medicine and Rehabilitation",
+  "injury to internal organ": "Physical Medicine and Rehabilitation",
+  "injury to the abdomen": "Physical Medicine and Rehabilitation",
+  "injury to the arm": "Physical Medicine and Rehabilitation",
+  "injury to the face": "Physical Medicine and Rehabilitation",
+  "injury to the finger": "Physical Medicine and Rehabilitation",
+  "injury to the hand": "Physical Medicine and Rehabilitation",
+  "injury to the hip": "Physical Medicine and Rehabilitation",
+  "injury to the knee": "Physical Medicine and Rehabilitation",
+  "injury to the leg": "Physical Medicine and Rehabilitation",
+  "injury to the shoulder": "Physical Medicine and Rehabilitation",
+  "injury to the spinal cord": "Physical Medicine and Rehabilitation",
+  "injury to the trunk": "Physical Medicine and Rehabilitation",
+  "insect bite": "Dermatologist",
+  "insulin overdose": "Endocrinologist",
+  "interstitial lung disease": "Pulmonologist",
+  "intertrigo (skin condition)": "Dermatologist",
+  "intestinal cancer": "Gastroenterologist",
+  "intestinal disease": "Gastroenterologist",
+  "intestinal malabsorption": "Gastroenterologist",
+  "intestinal obstruction": "Gastroenterologist",
+  "intracranial abscess": "Neurologist",
+  "intracranial hemorrhage": "Neurologist",
+  "intracerebral hemorrhage": "Neurologist",
+  "intussusception": "Gastroenterologist",
+  "iridocyclitis": "Ophthalmologist",
+  "iron deficiency anemia": "Internal Medicine",
+  "irritable bowel syndrome": "Gastroenterologist",
+  "ischemia of the bowel": "Gastroenterologist",
+  "ischemic heart disease": "Cardiologist",
+  "itching of unknown cause": "Dermatologist",
+  
+  # J
+  "jaw disorder": "Dentistry",
+  "joint effusion": "Physical Medicine and Rehabilitation",
+  "juvenile rheumatoid arthritis": "Rheumatologist",
+  
+  # K
+  "kaposi sarcoma": "Dermatologist",
+  "kidney cancer": "Internal Medicine",
+  "kidney disease due to longstanding hypertension": "Internal Medicine",
+  "kidney failure": "Internal Medicine",
+  "kidney stone": "Internal Medicine",
+  "knee ligament or meniscus tear": "Physical Medicine and Rehabilitation",
+  
+  # L
+  "labyrinthitis": "Otolaryngologist",
+  "lactose intolerance": "Gastroenterologist",
+  "laryngitis": "Otolaryngologist",
+  "lateral epicondylitis (tennis elbow)": "Physical Medicine and Rehabilitation",
+  "leukemia": "Internal Medicine",
+  "lewy body dementia": "Psychiatry",
+  "lichen planus": "Dermatologist",
+  "lichen simplex": "Dermatologist",
+  "lice": "Dermatologist",
+  "lipoma": "Dermatologist",
+  "liver cancer": "Hepatologist",
+  "liver disease": "Hepatologist",
+  "lumbago": "Rheumatologist",
+  "lung cancer": "Pulmonologist",
+  "lung contusion": "Pulmonologist",
+  "lymphadenitis": "Internal Medicine",
+  "lymphangitis": "Internal Medicine",
+  "lymphedema": "Phlebologist",
+  "lymphogranuloma venereum": "Infectious Disease Specialist",
+  "lymphoma": "Internal Medicine",
+  "lyme disease": "Infectious Disease Specialist",
+  
+  # M
+  "macular degeneration": "Ophthalmologist",
+  "magnesium deficiency": "Internal Medicine",
+  "malaria": "Infectious Disease Specialist",
+  "male genitalia infection": "Urologist",
+  "malignant hypertension": "Cardiologist",
+  "mastectomy": "Internal Medicine",
+  "mastoiditis": "Otolaryngologist",
+  "meckel diverticulum": "Gastroenterologist",
+  "melanoma": "Dermatologist",
+  "meniere disease": "Otolaryngologist",
+  "meningioma": "Neurologist",
+  "meningitis": "Neurologist",
+  "menopause": "Gynecologist",
+  "metabolic disorder": "Endocrinologist",
+  "metastatic cancer": "Internal Medicine",
+  "migraine": "Neurologist",
+  "missed abortion": "Gynecologist",
+  "mitral valve disease": "Cardiologist",
+  "mittelschmerz": "Gynecologist",
+  "molluscum contagiosum": "Dermatologist",
+  "mononeuritis": "Neurologist",
+  "mononucleosis": "Internal Medicine",
+  "moyamoya disease": "Neurologist",
+  "mucositis": "Dentistry",
+  "multiple myeloma": "Internal Medicine",
+  "multiple sclerosis": "Neurologist",
+  "mumps": "Pediatrician",
+  "muscle spasm": "Physical Medicine and Rehabilitation",
+  "muscular dystrophy": "Neurologist",
+  "myasthenia gravis": "Neurologist",
+  "myocarditis": "Cardiologist",
+  "myoclonus": "Neurologist",
+  "myopia": "Ophthalmologist",
+  "myositis": "Rheumatologist",
+  "myelodysplastic syndrome": "Internal Medicine",
+  
+  # N
+  "narcolepsy": "Neurologist",
+  "nasal polyp": "Otolaryngologist",
+  "necrotizing fasciitis": "Dermatologist",
+  "neonatal jaundice": "Pediatrician",
+  "nerve impingement near the shoulder": "Physical Medicine and Rehabilitation",
+  "neuralgia": "Neurologist",
+  "neurofibromatosis": "Neurologist",
+  "neurosis": "Psychiatry",
+  "neuropathy due to drugs": "Neurologist",
+  "nonalcoholic liver disease (nash)": "Hepatologist",
+  "noninfectious gastroenteritis": "Gastroenterologist",
+  "normal pressure hydrocephalus": "Neurologist",
+  "nose disorder": "Otolaryngologist",
+  
+  # O
+  "obesity": "Endocrinologist",
+  "obsessive compulsive disorder (ocd)": "Psychiatry",
+  "obstructive sleep apnea (osa)": "Pulmonologist",
+  "omphalitis": "Pediatrician",
+  "onychomycosis": "Dermatologist",
+  "open wound due to trauma": "Plastic Surgery",
+  "open wound from surgical incision": "Plastic Surgery",
+  "open wound of the abdomen": "Plastic Surgery",
+  "open wound of the arm": "Plastic Surgery",
+  "open wound of the back": "Plastic Surgery",
+  "open wound of the cheek": "Plastic Surgery",
+  "open wound of the chest": "Plastic Surgery",
+  "open wound of the ear": "Plastic Surgery",
+  "open wound of the eye": "Plastic Surgery",
+  "open wound of the face": "Plastic Surgery",
+  "open wound of the finger": "Plastic Surgery",
+  "open wound of the foot": "Plastic Surgery",
+  "open wound of the hand": "Plastic Surgery",
+  "open wound of the head": "Plastic Surgery",
+  "open wound of the jaw": "Plastic Surgery",
+  "open wound of the knee": "Plastic Surgery",
+  "open wound of the lip": "Plastic Surgery",
+  "open wound of the mouth": "Plastic Surgery",
+  "open wound of the neck": "Plastic Surgery",
+  "open wound of the nose": "Plastic Surgery",
+  "open wound of the shoulder": "Plastic Surgery",
+  "oppositional disorder": "Psychiatry",
+  "optic neuritis": "Neurologist",
+  "oral leukoplakia": "Dentistry",
+  "oral mucosal lesion": "Dentistry",
+  "oral thrush (yeast infection)": "Dentistry",
+  "orbital cellulitis": "Ophthalmologist",
+  "orthostatic hypotension": "Internal Medicine",
+  "osteoarthritis": "Rheumatologist",
+  "osteochondroma": "Orthopedic Surgeon",
+  "osteochondrosis": "Physical Medicine and Rehabilitation",
+  "osteomyelitis": "Orthopedic Surgeon",
+  "osteoporosis": "Orthopedic Surgeon",
+  "otitis externa (swimmer's ear)": "Otolaryngologist",
+  "otitis media": "Otolaryngologist",
+  "otosclerosis": "Otolaryngologist",
+  "ovarian cancer": "Gynecologist",
+  "ovarian cyst": "Gynecologist",
+  "ovarian torsion": "Gynecologist",
+  "overflow incontinence": "Urologist",
+  
+  # P
+  "pain after an operation": "Physical Medicine and Rehabilitation",
+  "pain disorder affecting the neck": "Rheumatologist",
+  "pancreatic cancer": "Gastroenterologist",
+  "panic attack": "Psychiatry",
+  "panic disorder": "Psychiatry",
+  "parathyroid adenoma": "Endocrinologist",
+  "parasitic disease": "Infectious Disease Specialist",
+  "parkinson disease": "Neurologist",
+  "paronychia": "Dermatologist",
+  "paroxysmal supraventricular tachycardia": "Cardiologist",
+  "paroxysmal ventricular tachycardia": "Cardiologist",
+  "pelvic fistula": "Gynecologist",
+  "pelvic inflammatory disease": "Gynecologist",
+  "pelvic organ prolapse": "Gynecologist",
+  "pemphigus": "Dermatologist",
+  "pericarditis": "Cardiologist",
+  "peritonitis": "Gastroenterologist",
+  "peritonsillar abscess": "Otolaryngologist",
+  "perirectal infection": "Gastroenterologist",
+  "peripheral arterial disease": "Internal Medicine",
+  "peripheral arterial embolism": "Internal Medicine",
+  "peripheral nerve disorder": "Neurologist",
+  "persistent vomiting of unknown cause": "Gastroenterologist",
+  "personality disorder": "Psychiatry",
+"peyronie disease": "Urologist",
+"pharyngitis": "Otolaryngologist",
+"phimosis": "Urologist",
+"pinguecula": "Ophthalmologist",
+"pinworm infection": "Gastroenterologist",
+"pituitary adenoma": "Endocrinologist",
+"pituitary disorder": "Endocrinologist",
+"pityriasis rosea": "Dermatologist",
+"placenta previa": "Gynecologist",
+"placental abruption": "Gynecologist",
+"plantar fasciitis": "Physical Medicine and Rehabilitation",
+"pleural effusion": "Pulmonologist",
+"pneumoconiosis": "Pulmonologist",
+"pneumonia": "Pulmonologist",
+"pneumothorax": "Pulmonologist",
+"poisoning due to analgesics": "Internal Medicine",
+"poisoning due to anticonvulsants": "Internal Medicine",
+"poisoning due to antidepressants": "Internal Medicine",
+"poisoning due to antihypertensives": "Internal Medicine",
+"poisoning due to antimicrobial drugs": "Internal Medicine",
+"poisoning due to antipsychotics": "Internal Medicine",
+"poisoning due to ethylene glycol": "Internal Medicine",
+"poisoning due to gas": "Internal Medicine",
+"poisoning due to opioids": "Internal Medicine",
+"poisoning due to sedatives": "Internal Medicine",
+"polycystic kidney disease": "Nephrologist",
+"polycystic ovarian syndrome (pcos)": "Gynecologist",
+"polycythemia vera": "Hematologist",
+"polymyalgia rheumatica": "Rheumatologist",
+"postoperative infection": "Internal Medicine",
+"postpartum depression": "Psychiatry",
+"post-traumatic stress disorder (ptsd)": "Psychiatry",
+"preeclampsia": "Gynecologist",
+"pregnancy": "Gynecologist",
+"premature atrial contractions (pacs)": "Cardiologist",
+"premature ovarian failure": "Gynecologist",
+"premature rupture of amniotic membrane": "Gynecologist",
+"premature ventricular contractions (pvcs)": "Cardiologist",
+"premenstrual tension syndrome": "Gynecologist",
+"presbyacusis": "Otolaryngologist",
+"presbyopia": "Ophthalmologist",
+"primary immunodeficiency": "Immunologist",
+"primary insomnia": "Psychiatry",
+"primary kidney disease": "Nephrologist",
+"primary thrombocythemia": "Hematologist",
+"priapism": "Urologist",
+"problem during pregnancy": "Gynecologist",
+"prostate cancer": "Urologist",
+"prostatitis": "Urologist",
+"protein deficiency": "Internal Medicine",
+"pseudohypoparathyroidism": "Endocrinologist",
+"pseudotumor cerebri": "Neurologist",
+"psoriasis": "Dermatologist",
+"psychosexual disorder": "Psychiatry",
+"psychotic disorder": "Psychiatry",
+"pulmonary congestion": "Pulmonologist",
+"pulmonary embolism": "Pulmonologist",
+"pulmonary eosinophilia": "Pulmonologist",
+"pulmonary fibrosis": "Pulmonologist",
+"pulmonary hypertension": "Pulmonologist",
+"pyelonephritis": "Nephrologist",
+"pyloric stenosis": "Gastroenterologist",
+"pyogenic skin infection": "Dermatologist",
+
+#R
+"raynaud disease": "Rheumatologist",
+"reactive arthritis": "Rheumatologist",
+"rectal disorder": "Gastroenterologist",
+"restless leg syndrome": "Neurologist",
+"retinal detachment": "Ophthalmologist",
+"retinopathy due to high blood pressure": "Ophthalmologist",
+"rhabdomyolysis": "Internal Medicine",
+"rheumatic fever": "Cardiologist",
+"rheumatoid arthritis": "Rheumatologist",
+"rocky mountain spotted fever": "Infectious Disease Specialist",
+"rosacea": "Dermatologist",
+"rotator cuff injury": "Physical Medicine and Rehabilitation",
+#S
+"salivary gland disorder": "Otolaryngologist",
+"sarcoidosis": "Pulmonologist",
+"scabies": "Dermatologist",
+"scar": "Dermatologist",
+"schizophrenia": "Psychiatry",
+"sciatica": "Neurologist",
+"scleroderma": "Rheumatologist",
+"scleritis": "Ophthalmologist",
+"scoliosis": "Physical Medicine and Rehabilitation",
+"scurvy": "Internal Medicine",
+"seasonal allergies (hay fever)": "Allergist",
+"sebaceous cyst": "Dermatologist",
+"seborrheic dermatitis": "Dermatologist",
+"seborrheic keratosis": "Dermatologist",
+"sensorineural hearing loss": "Otolaryngologist",
+"sepsis": "Internal Medicine",
+"septic arthritis": "Rheumatologist",
+"shingles (herpes zoster)": "Dermatologist",
+"sialoadenitis": "Otolaryngologist",
+"sickle cell anemia": "Hematologist",
+"sickle cell Crisis": "Hematologist",
+"sinus bradycardia": "Cardiologist",
+"sjogren syndrome": "Rheumatologist",
+"skin cancer": "Dermatologist",
+"skin disorder": "Dermatologist",
+"skin pigmentation disorder": "Dermatologist",
+"skin polyp": "Dermatologist",
+"smoking or tobacco addiction": "Psychiatry",
+"social phobia": "Psychiatry",
+"soft tissue sarcoma": "Oncologist",
+"somatization disorder": "Psychiatry",
+"sperm abnormalities": "Urologist",
+"spermatocele": "Urologist",
+"spherocytosis": "Hematologist",
+"spina bifida": "Neurologist",
+"spinal stenosis": "Neurologist",
+"spinocerebellar ataxia": "Neurologist",
+"spontaneous abortion": "Gynecologist",
+"sporotrichosis": "Dermatologist",
+"sprain or strain": "Physical Medicine and Rehabilitation",
+"stenosis of the tear duct": "Ophthalmologist",
+"stomach cancer": "Gastroenterologist",
+"strep throat": "Otolaryngologist",
+"stress incontinence": "Urologist",
+"stricture of the esophagus": "Gastroenterologist",
+"stroke": "Neurologist",
+"stye": "Ophthalmologist",
+"subacute thyroiditis": "Endocrinologist",
+"subarachnoid hemorrhage": "Neurologist",
+"subconjunctival hemorrhage": "Ophthalmologist",
+"subdural hemorrhage": "Neurologist",
+"substance-related mental disorder": "Psychiatry",
+"syringomyelia": "Neurologist",
+"systemic lupus erythematosis (sle)": "Rheumatologist",
+
+#T
+"teething syndrome": "Dentistry",
+"temporary or benign blood in urine": "Urologist",
+"tendinitis": "Physical Medicine and Rehabilitation",
+"tension headache": "Neurologist",
+"testicular cancer": "Urologist",
+"testicular disorder": "Urologist",
+"testicular torsion": "Urologist",
+"thalassemia": "Hematologist",
+"thoracic aortic aneurysm": "Cardiologist",
+"thoracic outlet syndrome": "Neurologist",
+"threatened pregnancy": "Gynecologist",
+"thrombocytopenia": "Hematologist",
+"thrombophlebitis": "Internal Medicine",
+"thyroid cancer": "Endocrinologist",
+"thyroid disease": "Endocrinologist",
+"thyroid nodule": "Endocrinologist",
+"tic (movement) disorder": "Neurologist",
+"tietze syndrome": "Rheumatologist",
+"tinnitus of unknown cause": "Otolaryngologist",
+"tonsillar hypertrophy": "Otolaryngologist",
+"tonsillitis": "Otolaryngologist",
+"tooth abscess": "Dentistry",
+"tooth disorder": "Dentistry",
+"torticollis": "Neurologist",
+"tourette syndrome": "Neurologist",
+"toxic multinodular goiter": "Endocrinologist",
+"toxoplasmosis": "Infectious Disease Specialist",
+"tracheitis": "Pulmonologist",
+"transient ischemic attack": "Neurologist",
+"trichinosis": "Infectious Disease Specialist",
+"trichiasis": "Ophthalmologist",
+"trichomonas infection": "Gynecologist",
+"tricuspid valve disease": "Cardiologist",
+"trigeminal neuralgia": "Neurologist",
+"trigger finger (finger disorder)": "Physical Medicine and Rehabilitation",
+"tuberous sclerosis": "Neurologist",
+"tuberculosis": "Pulmonologist",
+"turner syndrome": "Endocrinologist",
+"typhoid fever": "Infectious Disease Specialist",
+
+#U
+"ulcerative colitis": "Gastroenterologist",
+"urethral disorder": "Urologist",
+"urethral stricture": "Urologist",
+"urethral valves": "Urologist",
+"urethritis": "Urologist",
+"urge incontinence": "Urologist",
+"urinary tract infection": "Urologist",
+"urinary tract obstruction": "Urologist",
+"uterine atony": "Gynecologist",
+"uterine cancer": "Gynecologist",
+"uterine fibroids": "Gynecologist",
+"uveitis": "Ophthalmologist",
+
+#V
+"vacterl syndrome": "Pediatrician",
+"vaginal cyst": "Gynecologist",
+"vaginal yeast infection": "Gynecologist",
+"vaginismus": "Gynecologist",
+"vaginitis": "Gynecologist",
+"valley fever": "Infectious Disease Specialist",
+"varicocele of the testicles": "Urologist",
+"varicose veins": "Phlebologist",
+"vasculitis": "Rheumatologist",
+"venous insufficiency": "Phlebologist",
+"vertebrobasilar insufficiency": "Neurologist",
+"vesicoureteral reflux": "Urologist",
+"viral exanthem": "Dermatologist",
+"viral hepatitis": "Hepatologist",
+"viral warts": "Dermatologist",
+"vitreous degeneration": "Ophthalmologist",
+"vitreous hemorrhage": "Ophthalmologist",
+"vitamin a deficiency": "Internal Medicine",
+"vitamin b12 deficiency": "Internal Medicine",
+"vitamin d deficiency": "Internal Medicine",
+"vocal cord polyp": "Otolaryngologist",
+"volvulus": "Gastroenterologist",
+"von willebrand disease": "Hematologist",
+"vulvar cancer": "Gynecologist",
+"vulvar disorder": "Gynecologist",
+"vulvodynia": "Gynecologist",
+
+#W
+"wernicke korsakoff syndrome": "Neurologist",
+"white blood cell disease": "Hematologist",
+"whooping cough": "Pulmonologist",
+"wilson disease": "Hepatologist",
+
+#Y
+"yeast infection": "Dermatologist",
+
+#Z
+"zenker diverticulum": "Gastroenterologist"
 }
 
 # Debugging: Print current working directory
 print("Current working directory:", os.getcwd())
 
-# Load the model and symptom list
+# Load the model, symptom list, and label encoder
 try:
-    model = joblib.load('doctor_specialty_model.joblib')
-    symps = joblib.load('symptom_list.joblib')
+    model = joblib.load('new_doctor_specialty_model.joblib')
+    symptoms = joblib.load('new_symptom_list.joblib')
+    
+    # Load the original dataset to get disease names
+    df = pd.read_csv('archive/Final_Augmented_dataset_Diseases_and_Symptoms.csv')
+    le = LabelEncoder()
+    le.fit(df['diseases'])  # Fit the encoder with original disease names
+    
     print("Model and symptoms loaded successfully.")
 except FileNotFoundError as e:
-    print(f"Error loading model or symptoms: {e}")
+    print(f"Error loading files: {e}")
     model = None
-    symps = None
+    symptoms = None
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if model is None or symps is None:
+    if model is None or symptoms is None:
         return jsonify({'error': 'Model or symptoms not loaded.'}), 500
 
     try:
         # Get input data
         data = request.get_json()
-        symptoms = data.get('symptoms', [])
-        symptoms = [symptom.lower().replace(' ', '_').lstrip('_') for symptom in symptoms]  # Preprocess symptoms
-        print("Received symptoms (after preprocessing):", symptoms)  # Debugging
-
-        # Validate input
-        if not symptoms:
-            return jsonify({'error': 'No symptoms provided.'}), 400
-
-        # Create input DataFrame
-        input_data = pd.DataFrame(0, columns=symps, index=[0])
-        for symptom in symptoms:
-            if symptom in symps:
+        input_symptoms = data.get('symptoms', [])
+        
+        if not input_symptoms:
+            return jsonify({'error': 'No symptoms provided'}), 400
+            
+        # Create input DataFrame with all symptoms set to 0
+        input_data = pd.DataFrame(0, columns=symptoms, index=[0])
+        
+        # Set 1 for symptoms that are present
+        valid_symptoms = []
+        for symptom in input_symptoms:
+            symptom = symptom.lower().replace(' ', '_')
+            if symptom in symptoms:
                 input_data[symptom] = 1
+                valid_symptoms.append(symptom)
             else:
                 print(f"Warning: Symptom '{symptom}' not found in symptom list.")
-
-        print("Input data for prediction:\n", input_data)  # Debugging
+        
+        if not valid_symptoms:
+            return jsonify({'error': 'No valid symptoms provided'}), 400
 
         # Make prediction
-        prediction = model.predict(input_data)
-        predicted_disease = prediction[0]
-        print("Prediction (raw):", predicted_disease)  # Debugging: Print the exact predicted disease name
+        predicted_label = model.predict(input_data)[0]
+        
+        # Convert numeric label back to disease name
+        predicted_disease = le.inverse_transform([predicted_label])[0]
+        
+        # Get specialist from mapping
+        specialist = disease_to_specialist.get(
+            predicted_disease.lower(), 
+            "Internal Medicine"
+        )
 
-        # Normalize the predicted disease name
-        predicted_disease = predicted_disease.strip().lower()  # Remove extra spaces and convert to lowercase
-        print("Prediction (normalized):", predicted_disease)  # Debugging
-
-        # Normalize dictionary keys for comparison
-        normalized_disease_to_specialist = {k.strip().lower(): v for k, v in disease_to_specialist.items()}
-
-        # Get the corresponding specialist
-        specialist = normalized_disease_to_specialist.get(predicted_disease, "Internal Medicine")  # Default to Internal Medicine if disease not found
-        print("Corresponding specialist:", specialist)  # Debugging
+        print(f"Input symptoms: {valid_symptoms}")
+        print(f"Predicted disease: {predicted_disease}")
+        print(f"Recommended specialist: {specialist}")
 
         return jsonify({
-            'prediction': predicted_disease,
-            'specialist': specialist
+            'disease': predicted_disease,
+            'specialist': specialist,
+            'input_symptoms': valid_symptoms
         })
 
     except Exception as e:
