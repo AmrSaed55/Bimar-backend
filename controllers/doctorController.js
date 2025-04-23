@@ -6,6 +6,7 @@ import responseMsgs from "../utilities/responseMsgs.js";
 import errorHandler from "../utilities/errorHandler.js";
 import nodemailer from "nodemailer";
 import { decode } from "jsonwebtoken";
+import Admin from "../models/AdminAuthModel.js";
 
 // Register Function
 const register = async (req, res) => {
@@ -93,7 +94,46 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     let credentials = req.body;
+    
+    // First, try to find admin with the provided email
+    let admin = await Admin.findOne({ email: credentials.doctorEmail });
+    
+    if (admin) {
+      // If admin exists, check password
+      let checkPassword = await bcrypt.compare(
+        credentials.doctorPassword,
+        admin.password
+      );
+      
+      if (!checkPassword) {
+        throw "Wrong Password";
+      }
+      
+      // Create token with admin ID and isAdmin flag
+      let token = jwt.sign(
+        { 
+          userId: admin._id,
+          isAdmin: true 
+        },
+        process.env.JWT_KEY
+      );
+      
+      // Return admin data with token
+      return res.status(200).cookie("jwt", token).json({
+        status: responseMsgs.SUCCESS,
+        data: "Logged In Successfully as Admin",
+        user: {
+          _id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          isAdmin: true
+        }
+      });
+    }
+    
+    // If not an admin, check for doctor
     let getDoctor = await doctor.findOne({ doctorEmail: credentials.doctorEmail });
+    
     if (!getDoctor) {
       throw "User Not Found";
     }
@@ -102,23 +142,30 @@ const login = async (req, res) => {
       credentials.doctorPassword,
       getDoctor.doctorPassword
     );
+    
     if (!checkPassword) {
       throw "Wrong Password";
     }
 
-    const doctorData = getDoctor;
-
+    // Create token with doctor ID and isAdmin:false
     let token = jwt.sign(
-      { userId: getDoctor._id },
+      { 
+        userId: getDoctor._id,
+        isAdmin: false 
+      },
       process.env.JWT_KEY
     );
+    
+    // Return doctor data with token
     res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
-      data: "Logged In Successfully",
-      doctor: doctorData,
+      data: "Logged In Successfully as Doctor",
+      doctor: getDoctor,
+      isAdmin: false
     });
+    
   } catch (er) {
-    console.log("Error in login doctor controller", er);
+    console.log("Error in login controller", er);
     errorHandler(res, er);
   }
 };

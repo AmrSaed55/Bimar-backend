@@ -23,6 +23,7 @@ import connectToMongoDB from "./db/connectToMongoDB.js";
 import ratingRoutes from './Routes/ratingRoutes.js'
 import appRatingRoutes from './Routes/appRatingRoutes.js';
 import medicationTrack from "./Routes/medicationTrackRoute.js";
+import adminRoute from "./Routes/AdminAuthRoute.js"
 
 import {scheduleReminders} from "./controllers/automaticMedicineAlert.js"
 
@@ -77,6 +78,7 @@ app.use("/analytics", appointmentAnalytics);
 app.use('/rate',ratingRoutes);
 app.use('/rateApp', appRatingRoutes);
 app.use('/medication',medicationTrack);
+app.use('/admin',adminRoute);
 
 const onlineUsers = {};
 

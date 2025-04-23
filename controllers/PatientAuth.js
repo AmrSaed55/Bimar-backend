@@ -25,7 +25,7 @@ const register = async (req, res) => {
     });
 
     if(addPatient){
-    res.status(201).json({
+    res.status(200).json({
       status: responseMsgs.SUCCESS,
       data: "SignUp Successfully",
     });}
@@ -74,7 +74,7 @@ const login = async (req, res) => {
       },
       process.env.JWT_KEY
     );
-    console.log("lOgin token :- ",token)
+    // console.log("lOgin token :- ",token)
     res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
       data: "Logged In Successfully",
