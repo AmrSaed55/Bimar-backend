@@ -3,10 +3,10 @@ import appointmentAnalytics from "../controllers/appointmentAnalytics.js"
 
 const router = express.Router();
 
-router.get("/daily/:doctorId",appointmentAnalytics.getDailyAnalytics);
-router.get("/weekly/:doctorId",appointmentAnalytics.getWeeklyAnalytics);
-router.get("/monthly/:doctorId",appointmentAnalytics.getMonthlyAnalytics);
-router.get("/yearly/:doctorId",appointmentAnalytics.getYearlyAnalytics);
-router.get("/total/:doctorId",appointmentAnalytics.getTotalAnalytics);
+router.get("/daily",appointmentAnalytics.getDailyAnalytics);
+router.get("/weekly",appointmentAnalytics.getWeeklyAnalytics);
+router.get("/monthly",appointmentAnalytics.getMonthlyAnalytics);
+router.get("/yearly",appointmentAnalytics.getYearlyAnalytics);
+router.get("/total",appointmentAnalytics.getTotalAnalytics);
 
 export default router;

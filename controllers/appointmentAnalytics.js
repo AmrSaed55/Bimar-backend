@@ -1,6 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
 import Appointments from "../models/AppointmentsModel.js";
+import jwt from "jsonwebtoken";
+import errorHandler from "../utilities/errorHandler.js";
 
 const getAnalytics = async (
   doctorId,
@@ -58,7 +60,17 @@ const getAnalytics = async (
 
 const getDailyAnalytics = async (req, res) => {
   try {
-    const doctorId = req.params.doctorId;
+    // Get doctorId from token instead of params
+    const token = req.cookies.jwt;
+    if (!token) throw "Token not provided";
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    
+    // Check if the user is a doctor (not an admin)
+    if (decoded.isAdmin) throw "Unauthorized: Only doctors can access their analytics";
+    
+    const doctorId = decoded.userId;
+    
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
@@ -66,13 +78,24 @@ const getDailyAnalytics = async (req, res) => {
     const analytics = await getAnalytics(doctorId, startOfDay, endOfDay);
     res.status(200).json(analytics);
   } catch (error) {
-    res.status(500).json({ error: error.toString() });
+    console.log("Error in getDailyAnalytics:", error);
+    errorHandler(res, error);
   }
 };
 
 const getWeeklyAnalytics = async (req, res) => {
   try {
-    const doctorId = req.params.doctorId;
+    // Get doctorId from token instead of params
+    const token = req.cookies.jwt;
+    if (!token) throw "Token not provided";
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    
+    // Check if the user is a doctor (not an admin)
+    if (decoded.isAdmin) throw "Unauthorized: Only doctors can access their analytics";
+    
+    const doctorId = decoded.userId;
+    
     const today = new Date();
 
     const firstDayOfWeek = new Date(today);
@@ -90,13 +113,24 @@ const getWeeklyAnalytics = async (req, res) => {
     );
     res.status(200).json(analytics);
   } catch (error) {
-    res.status(500).json({ error: error.toString() });
+    console.log("Error in getWeeklyAnalytics:", error);
+    errorHandler(res, error);
   }
 };
 
 const getMonthlyAnalytics = async (req, res) => {
   try {
-    const doctorId = req.params.doctorId;
+    // Get doctorId from token instead of params
+    const token = req.cookies.jwt;
+    if (!token) throw "Token not provided";
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    
+    // Check if the user is a doctor (not an admin)
+    if (decoded.isAdmin) throw "Unauthorized: Only doctors can access their analytics";
+    
+    const doctorId = decoded.userId;
+    
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDayOfMonth = new Date(
@@ -116,13 +150,24 @@ const getMonthlyAnalytics = async (req, res) => {
     );
     res.status(200).json(analytics);
   } catch (error) {
-    res.status(500).json({ error: error.toString() });
+    console.log("Error in getMonthlyAnalytics:", error);
+    errorHandler(res, error);
   }
 };
 
 const getYearlyAnalytics = async (req, res) => {
   try {
-    const doctorId = req.params.doctorId;
+    // Get doctorId from token instead of params
+    const token = req.cookies.jwt;
+    if (!token) throw "Token not provided";
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    
+    // Check if the user is a doctor (not an admin)
+    if (decoded.isAdmin) throw "Unauthorized: Only doctors can access their analytics";
+    
+    const doctorId = decoded.userId;
+    
     const now = new Date();
     const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
     const lastDayOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
@@ -135,17 +180,29 @@ const getYearlyAnalytics = async (req, res) => {
     );
     res.status(200).json(analytics);
   } catch (error) {
-    res.status(500).json({ error: error.toString() });
+    console.log("Error in getYearlyAnalytics:", error);
+    errorHandler(res, error);
   }
 };
 
 const getTotalAnalytics = async (req, res) => {
   try {
-    const doctorId = req.params.doctorId;
+    // Get doctorId from token instead of params
+    const token = req.cookies.jwt;
+    if (!token) throw "Token not provided";
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    
+    // Check if the user is a doctor (not an admin)
+    if (decoded.isAdmin) throw "Unauthorized: Only doctors can access their analytics";
+    
+    const doctorId = decoded.userId;
+    
     const analytics = await getAnalytics(doctorId);
     res.status(200).json(analytics);
   } catch (error) {
-    res.status(500).json({ error: error.toString() });
+    console.log("Error in getTotalAnalytics:", error);
+    errorHandler(res, error);
   }
 };
 
