@@ -60,17 +60,18 @@ const createAppointemnt = async (req, res) => {
       throw "No more booking slots available for this day";
     }
 
-    // Check if patient already has an appointment on this date
+    // Check if patient already has an ACTIVE appointment on this date
     const existingPatientAppointment = await Appointments.findOne({
       patientId: patient._id,
       appointmentDate: {
         $gte: startOfDay,
         $lte: endOfDay
-      }
+      },
+      status: { $ne: "Cancelled" }  // Only check for non-cancelled appointments
     });
 
     if (existingPatientAppointment) {
-      throw "You already have an appointment scheduled for this day. Please choose a different date.";
+      throw "You already have an active appointment scheduled for this day. Please choose a different date.";
     }
 
     // Create appointment with the next booking number

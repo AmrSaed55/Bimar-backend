@@ -29,11 +29,13 @@ const AppointmentsSchema = mongoose.Schema({
     enum: ["Pending", "Completed","cancelled"],
     default: "Pending",
   },
+  Price: Number,
   bookingType: {
     type: String,
     default: "first-Visit",
     enum: ["follow-up", "first-Visit"],
   },
+
   paymentStatus: {
     type: String,
     enum: ["Pending", "Paid"],
