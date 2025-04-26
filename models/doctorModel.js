@@ -40,6 +40,12 @@ const DoctorSchema = mongoose.Schema({
   certificates: [{ type: String, default: null }],
   clinic: [
     {
+      clinicName: { 
+        type: String, 
+        default: function() {
+            return this.parent().doctorName;
+        }
+    },
       clinicLicense: { type: String, default: null },
       clinicCity: { type: String, required: true },
       clinicArea: { type: String, required: true },

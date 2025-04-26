@@ -438,6 +438,8 @@ const updateClinic = async (req, res) => {
     const updateData = {};
 
     // Check for each field in clinicData and add it to updateData if it exists
+    if (clinicData.clinicName)
+      updateData["clinic.$.clinicName"] = clinicData.clinicName;
     if (clinicData.clinicCity)
       updateData["clinic.$.clinicCity"] = clinicData.clinicCity;
     if (clinicData.clinicArea)
