@@ -48,6 +48,7 @@ const register = async (req, res) => {
     let addDoctor = await doctor.create({
       ...newDoctorData,
       doctorPassword: hashedPassword,
+      status: "pending" // Explicitly set status to pending
     });
 
     // Send a welcome email
@@ -63,14 +64,16 @@ const register = async (req, res) => {
     const mailOptions = {
       from: "bimar.med24@gmail.com",
       to: newDoctorData.doctorEmail,
-      subject: "Welcome to Bimar",
+      subject: "Welcome to Bimar - Registration Under Review",
       html: ` <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;"> 
                 <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px;"> 
-                  <h1 style="background-color: #16423C; color: white; padding: 30px; text-align: center;">👋 Welcome to Our App</h1> 
+                  <h1 style="background-color: #16423C; color: white; padding: 30px; text-align: center;">👋 Welcome to Bimar</h1> 
                   <div style="padding: 30px;"> 
                   <h2>Hello, ${newDoctorData.doctorName} 👋</h2> 
-                  <p>We're excited to have you on board as part of our community. You can now log in and start exploring our platform.</p> 
-                  <p>If you have any questions, feel free to reach out to our support team.</p> 
+                  <p>Thank you for registering with Bimar! We're excited to have you join our medical community.</p>
+                  <p>Your registration is currently under review by our team. We will carefully examine your credentials and documents to ensure everything meets our standards.</p>
+                  <p>You will receive another email once your account has been reviewed and activated. This process typically takes 1-2 business days.</p>
+                  <p>If you have any questions during this process, please don't hesitate to contact our support team.</p>
                   <p>Best regards,</p> 
                   <p>Bimar's Team</p> 
                   </div> 
@@ -82,7 +85,7 @@ const register = async (req, res) => {
       await transporter.sendMail(mailOptions);
       res.status(201).json({
         status: responseMsgs.SUCCESS,
-        data: "SignUp Successfully",
+        data: "Registration submitted successfully. Your account is pending review.",
       });
     }
   } catch (er) {
@@ -145,6 +148,15 @@ const login = async (req, res) => {
     
     if (!checkPassword) {
       throw "Wrong Password";
+    }
+
+    // Check doctor's account status
+    if (getDoctor.status !== "active") {
+      return res.status(403).json({
+        status: responseMsgs.FAIL,
+        data: `Your account is currently ${getDoctor.status}. Please contact support for more information.`,
+        accountStatus: getDoctor.status
+      });
     }
 
     // Create token with doctor ID and isAdmin:false
@@ -312,10 +324,10 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// Get All Doctors Function
+// Get All Active Doctors Function
 const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await doctor.find({});
+    const doctors = await doctor.find({ status: "active" });
     res.status(200).json({
       status: responseMsgs.SUCCESS,
       data: doctors,

@@ -9,6 +9,18 @@ const DoctorSchema = mongoose.Schema({
   nationalID: { type: String, required: true, unique: true },
   Gender: { type: String, enum: ["Male", "Female"], required: true },
   doctorImage: { type: String, default: null },
+  status: {
+    type: String,
+    enum: ["pending", "rejected", "active", "banned", "suspended"],
+    default: "pending",
+    required: true,
+  },
+  suspensionDetails: {
+    reason: { type: String },
+    startDate: { type: Date },
+    duration: { type: Number },
+    endDate: { type: Date },
+  },
   field: {
     type: String,
     enum: [
@@ -40,12 +52,12 @@ const DoctorSchema = mongoose.Schema({
   certificates: [{ type: String, default: null }],
   clinic: [
     {
-      clinicName: { 
-        type: String, 
-        default: function() {
-            return this.parent().doctorName;
-        }
-    },
+      clinicName: {
+        type: String,
+        default: function () {
+          return this.parent().doctorName;
+        },
+      },
       clinicLicense: { type: String, default: null },
       clinicCity: { type: String, required: true },
       clinicArea: { type: String, required: true },
@@ -77,15 +89,15 @@ const DoctorSchema = mongoose.Schema({
     },
   ],
   ratings: {
-    averageRating: { 
-      type: Number, 
+    averageRating: {
+      type: Number,
       default: 0,
       min: 0,
-      max: 5 
+      max: 5,
     },
-    totalRatings: { 
-      type: Number, 
-      default: 0 
+    totalRatings: {
+      type: Number,
+      default: 0,
     },
   },
 });
