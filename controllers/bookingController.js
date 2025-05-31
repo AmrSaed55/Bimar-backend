@@ -20,6 +20,8 @@ const createAppointemnt = async (req, res) => {
       doctorId,
       clinicId,
       appointmentDate,
+      paymentMethod = "Cash", // Default to Cash if not specified
+      paymentDetails = {}, // Optional payment details
     } = req.body;
 
     // Fetch doctor from DB
@@ -32,6 +34,16 @@ const createAppointemnt = async (req, res) => {
 
     // Fetch price from the CLINIC
     const appointmentPrice = clinic.Price;
+
+    // Calculate tax (assuming 15% VAT)
+    const taxAmount = appointmentPrice * 0.15;
+    const totalAmount = appointmentPrice + taxAmount;
+
+    // Generate unique receipt number (format: RCP-YYYYMMDD-XXXX)
+    const date = new Date();
+    const dateStr = date.toISOString().slice(0,10).replace(/-/g,'');
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const receiptNumber = `RCP-${dateStr}-${randomNum}`;
 
     // Get the count of existing appointments for this clinic on this date
     const startOfDay = new Date(appointmentDate);
@@ -74,7 +86,7 @@ const createAppointemnt = async (req, res) => {
       throw "You already have an active appointment scheduled for this day. Please choose a different date.";
     }
 
-    // Create appointment with the next booking number
+    // Create appointment with receipt information
     const appointment = await Appointments.create({
       patientId: patient._id,
       doctorId,
@@ -82,7 +94,16 @@ const createAppointemnt = async (req, res) => {
       appointmentDate,
       bookingNumber: existingAppointmentsCount + 1,
       Price: appointmentPrice,
-      bookingType: req.body.bookingType || "first-Visit"
+      bookingType: req.body.bookingType || "first-Visit",
+      receipt: {
+        receiptNumber,
+        issueDate: new Date(),
+        paymentMethod,
+        paymentDetails,
+        taxAmount,
+        totalAmount,
+        notes: req.body.notes || "Initial appointment booking"
+      }
     });
 
     res.status(200).json({
@@ -128,6 +149,15 @@ const createAppointemnt = async (req, res) => {
                             <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Your Booking Number:</strong> ${appointment.bookingNumber}</p>
                             <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Clinic Working Hours:</strong> ${workDay.workingHours.join(' - ')}</p>
                             <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${clinic.clinicAddress}, ${clinic.clinicArea}, ${clinic.clinicCity}</p>
+                        </div>
+                        <!-- Receipt Section -->
+                        <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
+                            <h3 style="color: #0A558C; margin: 0 0 10px 0;">Receipt Details</h3>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>Receipt Number:</strong> ${receiptNumber}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>Payment Method:</strong> ${paymentMethod}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>Appointment Fee:</strong> $${appointmentPrice.toFixed(2)}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>Tax (15%):</strong> $${taxAmount.toFixed(2)}</p>
+                            <p style="margin: 5px 0; color: #16423C;"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
                         </div>
                     </div>
                     <p style="color: #555; font-size: 16px; line-height: 1.6;">
@@ -205,7 +235,14 @@ const createAppointemnt = async (req, res) => {
                         <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Booking Number:</strong> ${appointment.bookingNumber}</p>
                         <p style="margin: 5px 0; color: #16423C;"><strong>👤 Patient Name:</strong> ${patient.userName}</p>
                         <p style="margin: 5px 0; color: #16423C;"><strong>📞 Patient Phone:</strong> ${patient.userPhone}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Patient Email::</strong> ${patient.userEmail}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Patient Email:</strong> ${patient.userEmail}</p>
+                    </div>
+                    <!-- Receipt Section -->
+                    <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: #0A558C; margin: 0 0 10px 0;">Payment Details</h3>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>Receipt Number:</strong> ${receiptNumber}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>Payment Method:</strong> ${paymentMethod}</p>
+                        <p style="margin: 5px 0; color: #16423C;"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
                     </div>
                 </div>
                 <p style="color: #555; font-size: 16px; line-height: 1.6;">
@@ -340,7 +377,32 @@ const updateAppointment = async (req, res) => {
       doctorEmail: oldAppointment.doctorId?.doctorEmail,
       oldDate: oldAppointment.appointmentDate,
       newDate: appointmentData.appointmentDate || oldAppointment.appointmentDate,
+      oldReceipt: oldAppointment.receipt,
     };
+
+    // Handle receipt updates if provided
+    if (appointmentData.receipt) {
+      // If updating payment method or details
+      if (appointmentData.receipt.paymentMethod || appointmentData.receipt.paymentDetails) {
+        appointmentData.receipt = {
+          ...oldAppointment.receipt,
+          ...appointmentData.receipt,
+          // Keep the original receipt number and issue date
+          receiptNumber: oldAppointment.receipt.receiptNumber,
+          issueDate: oldAppointment.receipt.issueDate,
+        };
+      }
+
+      // If updating price, recalculate tax and total
+      if (appointmentData.Price) {
+        const taxAmount = appointmentData.Price * 0.15;
+        appointmentData.receipt = {
+          ...appointmentData.receipt,
+          taxAmount,
+          totalAmount: appointmentData.Price + taxAmount,
+        };
+      }
+    }
 
     // If the appointment date is being changed
     if (appointmentData.appointmentDate && 
@@ -453,9 +515,22 @@ const updateAppointment = async (req, res) => {
                                 <p style="margin: 5px 0; color: #16423C;"><strong>🔢 New Booking Number:</strong> ${updatedAppointment.bookingNumber}</p>
                                 <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Clinic Working Hours:</strong> ${workDay.workingHours.join(' - ')}</p>
                             </div>
+                            ${updatedAppointment.receipt ? `
+                            <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
+                                <h3 style="color: #0A558C; margin: 0 0 10px 0;">Updated Receipt Details</h3>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Receipt Number:</strong> ${updatedAppointment.receipt.receiptNumber}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Payment Method:</strong> ${updatedAppointment.receipt.paymentMethod}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Appointment Fee:</strong> $${updatedAppointment.Price.toFixed(2)}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Tax (15%):</strong> $${updatedAppointment.receipt.taxAmount.toFixed(2)}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Total Amount:</strong> $${updatedAppointment.receipt.totalAmount.toFixed(2)}</p>
+                            </div>
+                            ` : ''}
                             <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
                                 <h3 style="color: #0A558C; margin: 0 0 10px 0;">Previous Details</h3>
                                 <p style="margin: 5px 0; color: #16423C;"><strong>Previous Date:</strong> ${new Date(emailData.oldDate).toLocaleDateString()}</p>
+                                ${emailData.oldReceipt ? `
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Total Amount:</strong> $${emailData.oldReceipt.totalAmount.toFixed(2)}</p>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
@@ -486,9 +561,20 @@ const updateAppointment = async (req, res) => {
                                 <p style="margin: 5px 0; color: #16423C;"><strong>🔢 New Booking Number:</strong> ${updatedAppointment.bookingNumber}</p>
                                 <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Clinic Working Hours:</strong> ${workDay.workingHours.join(' - ')}</p>
                             </div>
+                            ${updatedAppointment.receipt ? `
+                            <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
+                                <h3 style="color: #0A558C; margin: 0 0 10px 0;">Updated Payment Details</h3>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Receipt Number:</strong> ${updatedAppointment.receipt.receiptNumber}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Payment Method:</strong> ${updatedAppointment.receipt.paymentMethod}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Total Amount:</strong> $${updatedAppointment.receipt.totalAmount.toFixed(2)}</p>
+                            </div>
+                            ` : ''}
                             <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
                                 <h3 style="color: #0A558C; margin: 0 0 10px 0;">Previous Details</h3>
                                 <p style="margin: 5px 0; color: #16423C;"><strong>Previous Date:</strong> ${new Date(emailData.oldDate).toLocaleDateString()}</p>
+                                ${emailData.oldReceipt ? `
+                                <p style="margin: 5px 0; color: #16423C;"><strong>Previous Total Amount:</strong> $${emailData.oldReceipt.totalAmount.toFixed(2)}</p>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
@@ -815,11 +901,96 @@ const deleteAppointment = async (req, res) => {
   }
 };
 
+const getReceiptDetails = async (req, res) => {
+  try {
+    const token = req.cookies.jwt;
+    if (!token) {
+      throw "Token not provided";
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    const userId = decoded.userId;
+
+    // Get appointment ID from request params
+    const appointmentId = req.params.id;
+
+    // Find appointment and populate necessary fields
+    const appointment = await Appointments.findById(appointmentId)
+      .populate("doctorId", "doctorName doctorEmail field clinic")
+      .populate("patientId", "userName userEmail userPhone");
+
+    if (!appointment) {
+      throw "Appointment not found";
+    }
+
+    // Verify if the requesting user is either the patient or the doctor
+    const isPatient = appointment.patientId?._id.equals(userId);
+    const isDoctor = appointment.doctorId?._id.equals(userId);
+
+    if (!isPatient && !isDoctor) {
+      throw "Unauthorized: You can only view receipts for your own appointments";
+    }
+
+    // Check if receipt exists
+    if (!appointment.receipt) {
+      throw "Receipt not found for this appointment";
+    }
+
+    // Find the specific clinic from doctor's clinics array
+    const doctor = appointment.doctorId;
+    const clinic = doctor?.clinic?.find(c => c._id.toString() === appointment.clinicId.toString());
+
+    // Format the receipt data with null checks
+    const receiptData = {
+      receiptNumber: appointment.receipt.receiptNumber || "N/A",
+      issueDate: appointment.receipt.issueDate || new Date(),
+      appointmentDate: appointment.appointmentDate,
+      bookingNumber: appointment.bookingNumber,
+      doctor: {
+        name: doctor?.doctorName || "N/A",
+        specialization: doctor?.field || "N/A",
+        email: doctor?.doctorEmail || "N/A"
+      },
+      patient: {
+        name: appointment.patientId?.userName || "N/A",
+        email: appointment.patientId?.userEmail || "N/A",
+        phone: appointment.patientId?.userPhone || "N/A"
+      },
+      clinic: {
+        name: clinic?.clinicName || "N/A",
+        address: clinic?.clinicAddress || "N/A",
+        city: clinic?.clinicCity || "N/A",
+        area: clinic?.clinicArea || "N/A",
+        price: clinic?.Price || 0
+      },
+      payment: {
+        basePrice: appointment.Price || 0,
+        taxAmount: appointment.receipt.taxAmount || 0,
+        totalAmount: appointment.receipt.totalAmount || 0,
+        paymentMethod: appointment.receipt.paymentMethod || "N/A",
+        paymentDetails: appointment.receipt.paymentDetails || {}
+      }
+    };
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      message: "Receipt details retrieved successfully",
+      data: receiptData
+    });
+
+  } catch (err) {
+    console.log("Error in getReceiptDetails:", err);
+    errorHandler(res, err);
+  }
+};
+
+
 export default {
   createAppointemnt,
   getAppointments,
   updateAppointment,
   cancelAppointment,
   createFollowUpAppointment,
-  deleteAppointment
+  deleteAppointment,
+  getReceiptDetails
 };

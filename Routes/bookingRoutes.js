@@ -9,5 +9,6 @@ router.get('/', bookingController.getAppointments);
 router.patch('/', bookingController.updateAppointment);
 router.patch('/:id',bookingController.cancelAppointment);
 router.delete('/:id',bookingController.deleteAppointment);
+router.get('/receipt/:id', bookingController.getReceiptDetails);
 
 export default router;
