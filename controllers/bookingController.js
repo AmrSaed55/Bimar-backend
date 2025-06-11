@@ -86,12 +86,18 @@ const createAppointemnt = async (req, res) => {
       throw "You already have an active appointment scheduled for this day. Please choose a different date.";
     }
 
+    // Extract the start time from working hours
+    // Working hours format: ["14:00 - 17:00"] - we need the start time "14:00"
+    const workingHoursString = workDay.workingHours[0]; // e.g., "14:00 - 17:00"
+    const appointmentStartTime = workingHoursString.split(' - ')[0]; // Extract "14:00"
+
     // Create appointment with receipt information
     const appointment = await Appointments.create({
       patientId: patient._id,
       doctorId,
       clinicId,
       appointmentDate,
+      appointmentStartTime,
       bookingNumber: existingAppointmentsCount + 1,
       Price: appointmentPrice,
       bookingType: req.body.bookingType || "first-Visit",
@@ -462,6 +468,10 @@ const updateAppointment = async (req, res) => {
 
       // 5. Assign new booking number
       appointmentData.bookingNumber = newDateAppointmentsCount + 1;
+      
+      // 6. Extract and assign new appointment start time from new date's working hours
+      const newWorkingHoursString = newDateWorkDay.workingHours[0];
+      appointmentData.appointmentStartTime = newWorkingHoursString.split(' - ')[0];
     }
 
     // Update the appointment
