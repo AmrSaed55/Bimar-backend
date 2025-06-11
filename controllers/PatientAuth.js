@@ -25,7 +25,7 @@ const register = async (req, res) => {
     });
 
     if(addPatient){
-    res.status(201).json({
+    res.status(200).json({
       status: responseMsgs.SUCCESS,
       data: "SignUp Successfully",
     });}
@@ -74,7 +74,7 @@ const login = async (req, res) => {
       },
       process.env.JWT_KEY
     );
-    console.log("lOgin token :- ",token)
+    // console.log("lOgin token :- ",token)
     res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
       data: "Logged In Successfully",
@@ -338,17 +338,71 @@ const getPatientById = async (req, res) => {
   }
 };
 
-const UpdatePatient = async(req,res)=>{
-  let id = req.params.id
-  let UpdatePatientData = req.body
-  
-  if(UpdatePatientData.userPassword){
-    let newPassword = await bcrypt.hash(UpdatePatientData.userPassword, 6)
-    UpdatePatientData.userPassword = newPassword
+const UpdatePatient = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const UpdatePatientData = req.body;
+    
+    // Get the existing patient data first
+    const existingPatient = await Patient.findById(id);
+    if (!existingPatient) {
+      throw "Patient not found";
+    }
+    
+    // Hash password if it's being updated
+    if (UpdatePatientData.userPassword) {
+      const newPassword = await bcrypt.hash(UpdatePatientData.userPassword, 6);
+      UpdatePatientData.userPassword = newPassword;
+    }
+    
+    // Handle nested objects like personalRecords
+    if (UpdatePatientData.personalRecords) {
+      UpdatePatientData.personalRecords = {
+        ...existingPatient.personalRecords,
+        ...UpdatePatientData.personalRecords
+      };
+    }
+    
+    // Handle other nested objects if they exist (like medicalHistory, etc.)
+    if (UpdatePatientData.medicalRecord) {
+      UpdatePatientData.medicalRecord = {
+        ...existingPatient.medicalRecord,
+        ...UpdatePatientData.medicalRecord
+      };
+    }
+    
+    // // Handle arrays properly - if you want to append instead of replace
+    // if (UpdatePatientData.allergies && Array.isArray(UpdatePatientData.allergies)) {
+    //   // If you want to merge arrays instead of replacing them:
+    //   // UpdatePatientData.allergies = [...new Set([...existingPatient.allergies || [], ...UpdatePatientData.allergies])];
+    //   // Or if you want to replace the array completely, just keep the new data as is
+    // }
+    
+    // Update the patient with merged data
+    const update = await Patient.updateOne(
+      { _id: id },
+      { $set: UpdatePatientData }
+    );
+    
+    if (update.modifiedCount > 0) {
+      // Get the updated patient data to return
+      const updatedPatient = await Patient.findById(id);
+      
+      res.status(200).json({
+        status: responseMsgs.SUCCESS,
+        message: "Patient updated successfully",
+        data: updatedPatient
+      });
+    } else {
+      res.status(400).json({
+        status: responseMsgs.FAIL,
+        message: "No changes made"
+      });
+    }
+  } catch (err) {
+    errorHandler(res, err);
   }
-  let update = await Patient.updateOne({_id : id},UpdatePatientData)
-  res.json(update ? {data :'Updated Successfulyy'} : {data : 'Something wend Wrong'})
-}
+};
 
 // API to update FCM token for a patient
 const updateFcm = async (req, res) => {

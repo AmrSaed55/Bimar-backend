@@ -5,6 +5,6 @@ import PatientRecordController from './../controllers/PatientRecordController.js
 const router = express.Router();
 
 router.get('/',PatientRecordController.getPatientRecords);
-router.put('/',PatientRecordController.updatePersonalRecords);
+router.patch('/',PatientRecordController.updatePatientRecords);
 
 export default router;

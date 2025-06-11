@@ -6,6 +6,7 @@ import responseMsgs from "../utilities/responseMsgs.js";
 import errorHandler from "../utilities/errorHandler.js";
 import nodemailer from "nodemailer";
 import { decode } from "jsonwebtoken";
+import Admin from "../models/AdminAuthModel.js";
 
 // Register Function
 const register = async (req, res) => {
@@ -47,6 +48,7 @@ const register = async (req, res) => {
     let addDoctor = await doctor.create({
       ...newDoctorData,
       doctorPassword: hashedPassword,
+      status: "pending" // Explicitly set status to pending
     });
 
     // Send a welcome email
@@ -62,14 +64,16 @@ const register = async (req, res) => {
     const mailOptions = {
       from: "bimar.med24@gmail.com",
       to: newDoctorData.doctorEmail,
-      subject: "Welcome to Bimar",
+      subject: "Welcome to Bimar - Registration Under Review",
       html: ` <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;"> 
                 <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px;"> 
-                  <h1 style="background-color: #16423C; color: white; padding: 30px; text-align: center;">👋 Welcome to Our App</h1> 
+                  <h1 style="background-color: #16423C; color: white; padding: 30px; text-align: center;">👋 Welcome to Bimar</h1> 
                   <div style="padding: 30px;"> 
                   <h2>Hello, ${newDoctorData.doctorName} 👋</h2> 
-                  <p>We're excited to have you on board as part of our community. You can now log in and start exploring our platform.</p> 
-                  <p>If you have any questions, feel free to reach out to our support team.</p> 
+                  <p>Thank you for registering with Bimar! We're excited to have you join our medical community.</p>
+                  <p>Your registration is currently under review by our team. We will carefully examine your credentials and documents to ensure everything meets our standards.</p>
+                  <p>You will receive another email once your account has been reviewed and activated. This process typically takes 1-2 business days.</p>
+                  <p>If you have any questions during this process, please don't hesitate to contact our support team.</p>
                   <p>Best regards,</p> 
                   <p>Bimar's Team</p> 
                   </div> 
@@ -81,7 +85,7 @@ const register = async (req, res) => {
       await transporter.sendMail(mailOptions);
       res.status(201).json({
         status: responseMsgs.SUCCESS,
-        data: "SignUp Successfully",
+        data: "Registration submitted successfully. Your account is pending review.",
       });
     }
   } catch (er) {
@@ -93,7 +97,46 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     let credentials = req.body;
+    
+    // First, try to find admin with the provided email
+    let admin = await Admin.findOne({ email: credentials.doctorEmail });
+    
+    if (admin) {
+      // If admin exists, check password
+      let checkPassword = await bcrypt.compare(
+        credentials.doctorPassword,
+        admin.password
+      );
+      
+      if (!checkPassword) {
+        throw "Wrong Password";
+      }
+      
+      // Create token with admin ID and isAdmin flag
+      let token = jwt.sign(
+        { 
+          userId: admin._id,
+          isAdmin: true 
+        },
+        process.env.JWT_KEY
+      );
+      
+      // Return admin data with token
+      return res.status(200).cookie("jwt", token).json({
+        status: responseMsgs.SUCCESS,
+        data: "Logged In Successfully as Admin",
+        user: {
+          _id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          isAdmin: true
+        }
+      });
+    }
+    
+    // If not an admin, check for doctor
     let getDoctor = await doctor.findOne({ doctorEmail: credentials.doctorEmail });
+    
     if (!getDoctor) {
       throw "User Not Found";
     }
@@ -102,23 +145,39 @@ const login = async (req, res) => {
       credentials.doctorPassword,
       getDoctor.doctorPassword
     );
+    
     if (!checkPassword) {
       throw "Wrong Password";
     }
 
-    const doctorData = getDoctor;
+    // Check doctor's account status
+    if (getDoctor.status !== "active") {
+      return res.status(403).json({
+        status: responseMsgs.FAIL,
+        data: `Your account is currently ${getDoctor.status}. Please contact support for more information.`,
+        accountStatus: getDoctor.status
+      });
+    }
 
+    // Create token with doctor ID and isAdmin:false
     let token = jwt.sign(
-      { userId: getDoctor._id },
+      { 
+        userId: getDoctor._id,
+        isAdmin: false 
+      },
       process.env.JWT_KEY
     );
+    
+    // Return doctor data with token
     res.status(200).cookie("jwt", token).json({
       status: responseMsgs.SUCCESS,
-      data: "Logged In Successfully",
-      doctor: doctorData,
+      data: "Logged In Successfully as Doctor",
+      doctor: getDoctor,
+      isAdmin: false
     });
+    
   } catch (er) {
-    console.log("Error in login doctor controller", er);
+    console.log("Error in login controller", er);
     errorHandler(res, er);
   }
 };
@@ -265,10 +324,10 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// Get All Doctors Function
+// Get All Active Doctors Function
 const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await doctor.find({});
+    const doctors = await doctor.find({ status: "active" });
     res.status(200).json({
       status: responseMsgs.SUCCESS,
       data: doctors,
@@ -391,6 +450,8 @@ const updateClinic = async (req, res) => {
     const updateData = {};
 
     // Check for each field in clinicData and add it to updateData if it exists
+    if (clinicData.clinicName)
+      updateData["clinic.$.clinicName"] = clinicData.clinicName;
     if (clinicData.clinicCity)
       updateData["clinic.$.clinicCity"] = clinicData.clinicCity;
     if (clinicData.clinicArea)
