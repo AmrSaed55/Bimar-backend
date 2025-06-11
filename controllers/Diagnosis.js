@@ -351,6 +351,370 @@ const getSpecificDiagnosis = async (req, res) => {
   }
 };
 
+// Add these methods to your existing Diagnosis.js controller file
+
+// Get a specific prescription by ID
+const getPrescriptionById = async (req, res) => {
+  try {
+    const { diagnosisId, prescriptionId } = req.params;
+    
+    // Find the diagnosis with the prescription
+    const patient = await PatientModel.findOne(
+      { "Diagnosis._id": diagnosisId },
+      { "Diagnosis.$": 1 }
+    );
+    
+    if (!patient || !patient.Diagnosis || patient.Diagnosis.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Diagnosis not found"
+      });
+    }
+    
+    const diagnosis = patient.Diagnosis[0];
+    
+    if (!diagnosis.prescription || diagnosis.prescription.prescriptionId !== prescriptionId) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Prescription not found"
+      });
+    }
+    
+    res.status(200).json({
+      status: "success",
+      data: diagnosis.prescription
+    });
+    
+  } catch (err) {
+    console.error("Error fetching prescription:", err);
+    errorHandler(res, err);
+  }
+};
+
+// Get a specific Xray by ID
+const getXrayById = async (req, res) => {
+  try {
+    const { diagnosisId, xrayId } = req.params;
+    
+    // Find the diagnosis with the Xray
+    const patient = await PatientModel.findOne(
+      { "Diagnosis._id": diagnosisId },
+      { "Diagnosis.$": 1 }
+    );
+    
+    if (!patient || !patient.Diagnosis || patient.Diagnosis.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Diagnosis not found"
+      });
+    }
+    
+    const diagnosis = patient.Diagnosis[0];
+    
+    // Find the specific Xray in the Xray array
+    const xrayPath = diagnosis.Xray.find(path => path.includes(xrayId));
+    
+    if (!xrayPath) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Xray not found"
+      });
+    }
+    
+    // Return the file path or serve the file directly
+    res.status(200).json({
+      status: "success",
+      data: { path: xrayPath }
+    });
+    
+  } catch (err) {
+    console.error("Error fetching Xray:", err);
+    errorHandler(res, err);
+  }
+};
+
+// Get a specific lab result by ID
+const getLabResultById = async (req, res) => {
+  try {
+    const { diagnosisId, labResultId } = req.params;
+    
+    // Find the diagnosis with the lab result
+    const patient = await PatientModel.findOne(
+      { "Diagnosis._id": diagnosisId },
+      { "Diagnosis.$": 1 }
+    );
+    
+    if (!patient || !patient.Diagnosis || patient.Diagnosis.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Diagnosis not found"
+      });
+    }
+    
+    const diagnosis = patient.Diagnosis[0];
+    
+    // Find the specific lab result in the labResults array
+    const labResultPath = diagnosis.labResults.find(path => path.includes(labResultId));
+    
+    if (!labResultPath) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Lab result not found"
+      });
+    }
+    
+    // Return the file path or serve the file directly
+    res.status(200).json({
+      status: "success",
+      data: { path: labResultPath }
+    });
+    
+  } catch (err) {
+    console.error("Error fetching lab result:", err);
+    errorHandler(res, err);
+  }
+};
+
+// Add X-rays to existing diagnosis
+const addXraysToDiagnosis = async (req, res) => {
+  try {
+    const { diagnosisId } = req.params;
+    
+    // Extract X-ray files
+    const xrayFiles = req.files?.Xray || [];
+    const xrayPaths = xrayFiles.map(file => file.path);
+
+    if (xrayPaths.length === 0) {
+      throw "No X-ray files provided";
+    }
+
+    // Token Verification
+    const token = req.cookies.jwt || req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw "Token not found";
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    const userId = decoded.userId;
+    if (!userId) {
+      throw "Must Login First";
+    }
+
+    // Find patient and update diagnosis
+    const patient = await PatientModel.findById(userId);
+    if (!patient) {
+      throw "Patient Not Found";
+    }
+
+    // Find the specific diagnosis
+    const diagnosisIndex = patient.Diagnosis.findIndex(
+      d => d._id.toString() === diagnosisId
+    );
+
+    if (diagnosisIndex === -1) {
+      throw "Diagnosis not found";
+    }
+
+    // Check if adding new files would exceed the limit
+    const currentXrayCount = patient.Diagnosis[diagnosisIndex].Xray.length;
+    if (currentXrayCount + xrayPaths.length > 5) {
+      throw "Maximum 5 X-ray files allowed per diagnosis";
+    }
+
+    // Add new X-ray paths to existing array
+    patient.Diagnosis[diagnosisIndex].Xray.push(...xrayPaths);
+    await patient.save();
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: {
+        message: "X-rays added successfully",
+        addedFiles: xrayPaths.length,
+        totalXrays: patient.Diagnosis[diagnosisIndex].Xray.length
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    errorHandler(res, err);
+  }
+};
+
+// Add lab results to existing diagnosis
+const addLabResultsToDiagnosis = async (req, res) => {
+  try {
+    const { diagnosisId } = req.params;
+    
+    // Extract lab result files
+    const labResultFiles = req.files?.labResults || [];
+    const labResultPaths = labResultFiles.map(file => file.path);
+
+    if (labResultPaths.length === 0) {
+      throw "No lab result files provided";
+    }
+
+    // Token Verification
+    const token = req.cookies.jwt || req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw "Token not found";
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    const userId = decoded.userId;
+    if (!userId) {
+      throw "Must Login First";
+    }
+
+    // Find patient and update diagnosis
+    const patient = await PatientModel.findById(userId);
+    if (!patient) {
+      throw "Patient Not Found";
+    }
+
+    // Find the specific diagnosis
+    const diagnosisIndex = patient.Diagnosis.findIndex(
+      d => d._id.toString() === diagnosisId
+    );
+
+    if (diagnosisIndex === -1) {
+      throw "Diagnosis not found";
+    }
+
+    // Check if adding new files would exceed the limit
+    const currentLabResultCount = patient.Diagnosis[diagnosisIndex].labResults.length;
+    if (currentLabResultCount + labResultPaths.length > 5) {
+      throw "Maximum 5 lab result files allowed per diagnosis";
+    }
+
+    // Add new lab result paths to existing array
+    patient.Diagnosis[diagnosisIndex].labResults.push(...labResultPaths);
+    await patient.save();
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: {
+        message: "Lab results added successfully",
+        addedFiles: labResultPaths.length,
+        totalLabResults: patient.Diagnosis[diagnosisIndex].labResults.length
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    errorHandler(res, err);
+  }
+};
+
+// Remove specific X-ray file
+const removeXrayFile = async (req, res) => {
+  try {
+    const { diagnosisId, xrayIndex } = req.params;
+    
+    // Token Verification
+    const token = req.cookies.jwt || req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw "Token not found";
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    const userId = decoded.userId;
+    if (!userId) {
+      throw "Must Login First";
+    }
+
+    // Find patient and update diagnosis
+    const patient = await PatientModel.findById(userId);
+    if (!patient) {
+      throw "Patient Not Found";
+    }
+
+    // Find the specific diagnosis
+    const diagnosisIndex = patient.Diagnosis.findIndex(
+      d => d._id.toString() === diagnosisId
+    );
+
+    if (diagnosisIndex === -1) {
+      throw "Diagnosis not found";
+    }
+
+    const xrayIndexNum = parseInt(xrayIndex);
+    if (xrayIndexNum < 0 || xrayIndexNum >= patient.Diagnosis[diagnosisIndex].Xray.length) {
+      throw "Invalid X-ray index";
+    }
+
+    // Remove the X-ray file
+    patient.Diagnosis[diagnosisIndex].Xray.splice(xrayIndexNum, 1);
+    await patient.save();
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: {
+        message: "X-ray file removed successfully",
+        remainingXrays: patient.Diagnosis[diagnosisIndex].Xray.length
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    errorHandler(res, err);
+  }
+};
+
+// Remove specific lab result file
+const removeLabResultFile = async (req, res) => {
+  try {
+    const { diagnosisId, labResultIndex } = req.params;
+    
+    // Token Verification
+    const token = req.cookies.jwt || req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw "Token not found";
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_KEY);
+    const userId = decoded.userId;
+    if (!userId) {
+      throw "Must Login First";
+    }
+
+    // Find patient and update diagnosis
+    const patient = await PatientModel.findById(userId);
+    if (!patient) {
+      throw "Patient Not Found";
+    }
+
+    // Find the specific diagnosis
+    const diagnosisIndex = patient.Diagnosis.findIndex(
+      d => d._id.toString() === diagnosisId
+    );
+
+    if (diagnosisIndex === -1) {
+      throw "Diagnosis not found";
+    }
+
+    const labResultIndexNum = parseInt(labResultIndex);
+    if (labResultIndexNum < 0 || labResultIndexNum >= patient.Diagnosis[diagnosisIndex].labResults.length) {
+      throw "Invalid lab result index";
+    }
+
+    // Remove the lab result file
+    patient.Diagnosis[diagnosisIndex].labResults.splice(labResultIndexNum, 1);
+    await patient.save();
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: {
+        message: "Lab result file removed successfully",
+        remainingLabResults: patient.Diagnosis[diagnosisIndex].labResults.length
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    errorHandler(res, err);
+  }
+};
+
 export default {
   creatDiagnosis,
     getDiagnosis,
@@ -360,5 +724,12 @@ export default {
     deleteconsultation,
     updateconsultation,
     createPrescription,
-    getSpecificDiagnosis
+    getSpecificDiagnosis,
+    getPrescriptionById,
+    getXrayById,
+    getLabResultById,
+    addXraysToDiagnosis,
+    addLabResultsToDiagnosis,
+    removeXrayFile,
+    removeLabResultFile
 }
