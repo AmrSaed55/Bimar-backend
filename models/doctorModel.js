@@ -64,7 +64,7 @@ const DoctorSchema = mongoose.Schema({
       clinicAddress: { type: String, required: true },
       clinicPhone: { type: [String], required: true },
       clinicEmail: { type: String, required: true },
-      clinicWebsite: { type: String, required: true },
+      clinicWebsite: { type: String, required: false },
       clinicWorkDays: [
         {
           day: {

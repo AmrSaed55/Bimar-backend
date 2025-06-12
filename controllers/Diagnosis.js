@@ -91,24 +91,24 @@ const createPrescription = async (req, res) => {
 
     // Create a new diagnosis entry with the prescription data and other fields set to null
     const newDiagnosis = {
-      date: new Date(),
-      doctorName: prescriptionData.doctorName || null,
-      doctorPhone: prescriptionData.doctorPhone || null,
-      diagnosis: prescriptionData.diagnosis || [],
-      treatmentPlan: prescriptionData.treatmentPlan || null,
-      Xray: [],
-      labResults: [],
-      prescription: {
-        prescriptionId: uuidv4(),
-        prescriptionDate: new Date(),
-        followUpDate: prescriptionData.prescription.followUpDate,
-        notes: prescriptionData.prescription.notes,
-        prescriptionInstruction: prescriptionData.prescription.prescriptionInstruction,
-        prescriptionStatus: prescriptionData.prescription.status || "Pending",
-      },
-      
-      consultations: [],
-    };
+  date: new Date(),
+  doctorName: prescriptionData.doctorName || null,
+  doctorPhone: prescriptionData.doctorPhone || null,
+  diagnosis: prescriptionData.diagnosis || [],
+  treatmentPlan: prescriptionData.treatmentPlan || null,
+  Xray: [],
+  labResults: [],
+  prescription: {
+    prescriptionId: uuidv4(),
+    prescriptionDate: new Date(),
+    followUpDate: prescriptionData.followUpDate || null,
+    notes: prescriptionData.notes || null,
+    prescriptionInstruction: prescriptionData.prescriptionInstruction || [],
+    prescriptionStatus: prescriptionData.status || "Pending",
+  },
+  consultations: [],
+};
+
 
     // If followUpDate is null, delete the consultations field
     // if (!prescriptionData.followUpDate) {
