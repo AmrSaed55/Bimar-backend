@@ -208,9 +208,43 @@ const deleteAppRating = async (req, res) => {
     }
 };
 
+const getRate = async (req, res) => {
+    try {
+        const token = req.cookies.jwt;
+        if (!token) throw "Token not found";
+
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
+        const userId = decoded.userId;
+
+        // Find user's rating
+        const userRating = await AppRating.findOne({ userId })
+            .select('rating comment');
+
+        if (!userRating) {
+            return res.status(404).json({
+                status: responseMsgs.FAIL,
+                message: "You haven't rated the application yet"
+            });
+        }
+
+        res.status(200).json({
+            status: responseMsgs.SUCCESS,
+            data: {
+                rating: userRating.rating,
+                comment: userRating.comment
+            }
+        });
+
+    } catch (err) {
+        console.log(err);
+        errorHandler(res, err);
+    }
+};
+
 export default {
     submitAppRating,
     updateAppRating,
     getAppRatings,
-    deleteAppRating
+    deleteAppRating,
+    getRate
 };
