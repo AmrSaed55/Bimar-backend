@@ -6,6 +6,8 @@ const router = express.Router();
 router.post('/',appRatingController.submitAppRating);
 router.patch('/',appRatingController.updateAppRating);
 router.delete('/',appRatingController.deleteAppRating);
-router.get('/',appRatingController.getAppRatings);
+router.get('/admin',appRatingController.getAppRatings);
+router.get('/',appRatingController.getRate);
+
 
 export default router;
