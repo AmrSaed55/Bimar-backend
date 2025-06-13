@@ -51,13 +51,25 @@ const createAppointemnt = async (req, res) => {
     const endOfDay = new Date(appointmentDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const existingAppointmentsCount = await Appointments.countDocuments({
+    // Get all active appointments for this date to find the first available slot
+    const existingAppointments = await Appointments.find({
       clinicId,
       appointmentDate: {
         $gte: startOfDay,
         $lte: endOfDay
+      },
+      status: { $ne: "Cancelled" }  // Only count active appointments
+    }).sort({ bookingNumber: 1 }); // Sort by booking number
+
+    // Find the first available booking number
+    let availableBookingNumber = 1;
+    for (const apt of existingAppointments) {
+      if (apt.bookingNumber === availableBookingNumber) {
+        availableBookingNumber++;
+      } else {
+        break; // Found a gap, use this number
       }
-    });
+    }
 
     // Check if we've reached the maximum number of bookings for this day
     const workDay = clinic.clinicWorkDays.find(day => 
@@ -68,7 +80,7 @@ const createAppointemnt = async (req, res) => {
       throw "Clinic is not open on this day";
     }
 
-    if (existingAppointmentsCount >= workDay.NoBookings) {
+    if (availableBookingNumber > workDay.NoBookings) {
       throw "No more booking slots available for this day";
     }
 
@@ -98,7 +110,7 @@ const createAppointemnt = async (req, res) => {
       clinicId,
       appointmentDate,
       appointmentStartTime,
-      bookingNumber: existingAppointmentsCount + 1,
+      bookingNumber: availableBookingNumber,
       Price: appointmentPrice,
       bookingType: req.body.bookingType || "first-Visit",
       receipt: {
@@ -117,188 +129,203 @@ const createAppointemnt = async (req, res) => {
       data: appointment,
     });
 
-    // Send confirmation email
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      port: parseInt(process.env.EMAIL_PORT) || 587,
-      auth: {
-        user: process.env.USER,
-        pass: process.env.PASS,
-      },
-    });
+    // Send confirmation email in background (non-blocking)
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        auth: {
+          user: process.env.USER,
+          pass: process.env.PASS,
+        },
+        // Fix SSL certificate issue
+        secure: false,
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
 
-    const patientMailOptions = {
-      from: "bimar.med24@gmail.com",
-      to: patient.userEmail,
-      subject: "Appointment Booked Successfully",
-      html: `
-        <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
-                <!-- Header Section -->
-                <div style="background-color: #16423C; padding: 30px; text-align: center;">
-                    <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">✅ Appointment Confirmed</h1>
-                </div>
+      const patientMailOptions = {
+        from: "bimar.med24@gmail.com",
+        to: patient.userEmail,
+        subject: "Appointment Booked Successfully",
+        html: `
+          <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
+                  <!-- Header Section -->
+                  <div style="background-color: #16423C; padding: 30px; text-align: center;">
+                      <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">✅ Appointment Confirmed</h1>
+                  </div>
 
-                <!-- Content Section -->
-                <div style="padding: 30px;">
-                    <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, ${
-                      patient.userName
-                    } 👋</h2>
-                    <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                        Your appointment with <strong>Dr. ${
-                          doctor.doctorName
-                        }</strong> has been successfully booked!
-                    </p>
-                    <div style="margin: 25px 0;">
-                        <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                            <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString()}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Your Booking Number:</strong> ${appointment.bookingNumber}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Clinic Working Hours:</strong> ${workDay.workingHours.join(' - ')}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${clinic.clinicAddress}, ${clinic.clinicArea}, ${clinic.clinicCity}</p>
-                        </div>
-                        <!-- Receipt Section -->
-                        <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
-                            <h3 style="color: #0A558C; margin: 0 0 10px 0;">Receipt Details</h3>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>Receipt Number:</strong> ${receiptNumber}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>Payment Method:</strong> ${paymentMethod}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>Appointment Fee:</strong> $${appointmentPrice.toFixed(2)}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>Tax (15%):</strong> $${taxAmount.toFixed(2)}</p>
-                            <p style="margin: 5px 0; color: #16423C;"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
-                        </div>
-                    </div>
-                    <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                        Please arrive 15 minutes before your scheduled time. For cancellations, kindly notify us at least 24 hours in advance.
-                    </p>
-                </div>
+                  <!-- Content Section -->
+                  <div style="padding: 30px;">
+                      <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, ${
+                        patient.userName
+                      } 👋</h2>
+                      <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                          Your appointment with <strong>Dr. ${
+                            doctor.doctorName
+                          }</strong> has been successfully booked!
+                      </p>
+                      <div style="margin: 25px 0;">
+                          <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
+                              <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString()}</p>
+                              <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Your Booking Number:</strong> ${appointment.bookingNumber}</p>
+                              <p style="margin: 5px 0; color: #16423C;"><strong>⏰ Clinic Working Hours:</strong> ${workDay.workingHours.join(' - ')}</p>
+                              <p style="margin: 5px 0; color: #16423C;"><strong>📍 Location:</strong> ${clinic.clinicAddress}, ${clinic.clinicArea}, ${clinic.clinicCity}</p>
+                          </div>
+                          <!-- Receipt Section -->
+                          <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
+                              <h3 style="color: #0A558C; margin: 0 0 10px 0;">Receipt Details</h3>
+                              <p style="margin: 5px 0; color: #16423C;"><strong>Receipt Number:</strong> ${receiptNumber}</p>
+                              <p style="margin: 5px 0; color: #16423C;"><strong>Payment Method:</strong> ${paymentMethod}</p>
+                              <p style="margin: 5px 0; color: #16423C;"><strong>Appointment Fee:</strong> $${appointmentPrice.toFixed(2)}</p>
+                              <p style="margin: 5px 0; color: #16423C;"><strong>Tax (15%):</strong> $${taxAmount.toFixed(2)}</p>
+                              <p style="margin: 5px 0; color: #16423C;"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
+                          </div>
+                      </div>
+                      <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                          Please arrive 15 minutes before your scheduled time. For cancellations, kindly notify us at least 24 hours in advance.
+                      </p>
+                  </div>
 
-                <!-- Footer Section -->
-                <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
-                    <p style="margin: 0;">
-                        Need to reschedule? Contact us at
-                        <a href="mailto:bimar.med24@gmail.com" style="color: #16423C; text-decoration: underline;">bimar.med24@gmail.com</a>
-                    </p>
-                    <p style="margin-top: 8px;">&copy; 2024 <span style="color: #16423C; font-weight: bold;">Bimar</span>. All Rights Reserved.</p>
-                </div>
-            </div>
-        </div>
+                  <!-- Footer Section -->
+                  <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
+                      <p style="margin: 0;">
+                          Need to reschedule? Contact us at
+                          <a href="mailto:bimar.med24@gmail.com" style="color: #16423C; text-decoration: underline;">bimar.med24@gmail.com</a>
+                      </p>
+                      <p style="margin-top: 8px;">&copy; 2024 <span style="color: #16423C; font-weight: bold;">Bimar</span>. All Rights Reserved.</p>
+                  </div>
+              </div>
+          </div>
 
-        <!-- Media Query -->
-        <style>
-            @media only screen and (max-width: 600px) {
-                div[style*="padding: 40px;"] {
-                    padding: 20px !important;
-                }
+          <!-- Media Query -->
+          <style>
+              @media only screen and (max-width: 600px) {
+                  div[style*="padding: 40px;"] {
+                      padding: 20px !important;
+                  }
 
-                div[style*="padding: 30px;"] {
-                    padding: 20px !important;
-                }
+                  div[style*="padding: 30px;"] {
+                      padding: 20px !important;
+                  }
 
-                h1, h2 {
-                    font-size: 20px !important;
-                }
+                  h1, h2 {
+                      font-size: 20px !important;
+                  }
 
-                p, a {
-                    font-size: 14px !important;
-                }
+                  p, a {
+                      font-size: 14px !important;
+                  }
 
-                span[style*="font-size: 28px;"] {
-                    font-size: 20px !important;
-                    padding: 10px 20px !important;
-                }
+                  span[style*="font-size: 28px;"] {
+                      font-size: 20px !important;
+                      padding: 10px 20px !important;
+                  }
 
-                a[style*="padding: 14px 40px;"] {
-                    padding: 10px 20px !important;
-                }
-            }
-        </style>
+                  a[style*="padding: 14px 40px;"] {
+                      padding: 10px 20px !important;
+                  }
+              }
+          </style>
+          `,
+      };
+
+      const doctorMailOptions = {
+        from: "bimar.med24@gmail.com",
+        to: doctor.doctorEmail,
+        subject: "New Appointment Scheduled",
+        html: `
+         <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
+
+              <!-- Header Section -->
+              <div style="background-color: #16423C; padding: 30px; text-align: center;">
+                  <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">🩺 New Appointment</h1>
+              </div>
+
+              <!-- Content Section -->
+              <div style="padding: 30px;">
+                  <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Dr. ${
+                    doctor.doctorName
+                  }</h2>
+                  <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                      A new appointment has been scheduled at your clinic.
+                  </p>
+                  <div style="margin: 25px 0;">
+                      <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
+                          <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString()}</p>
+                          <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Booking Number:</strong> ${appointment.bookingNumber}</p>
+                          <p style="margin: 5px 0; color: #16423C;"><strong>👤 Patient Name:</strong> ${patient.userName}</p>
+                          <p style="margin: 5px 0; color: #16423C;"><strong>📞 Patient Phone:</strong> ${patient.userPhone}</p>
+                          <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Patient Email:</strong> ${patient.userEmail}</p>
+                      </div>
+                      <!-- Receipt Section -->
+                      <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
+                          <h3 style="color: #0A558C; margin: 0 0 10px 0;">Payment Details</h3>
+                          <p style="margin: 5px 0; color: #16423C;"><strong>Receipt Number:</strong> ${receiptNumber}</p>
+                          <p style="margin: 5px 0; color: #16423C;"><strong>Payment Method:</strong> ${paymentMethod}</p>
+                          <p style="margin: 5px 0; color: #16423C;"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
+                      </div>
+                  </div>
+                  <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                      Please review the patient's medical history in your dashboard and prepare any necessary documents.
+                  </p>
+              </div>
+
+              <!-- Footer Section -->
+              <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
+                  <p style="margin: 0;">
+                      Need assistance? Contact us at
+                      <a href="mailto:bimar.med24@gmail.com" style="color: #16423C; text-decoration: underline;">bimar.med24@gmail.com</a>
+                  </p>
+                  <p style="margin-top: 8px;">&copy; 2024 <span style="color: #16423C; font-weight: bold;">Bimar</span>. All Rights Reserved.</p>
+              </div>
+          </div>
+      </div>
+      <!-- Media Query -->
+      <style>
+           @media only screen and (max-width: 600px) {
+                  div[style*="padding: 40px;"] {
+                      padding: 20px !important;
+                  }
+
+                  div[style*="padding: 30px;"] {
+                      padding: 20px !important;
+                  }
+
+                  h1, h2 {
+                      font-size: 20px !important;
+                  }
+
+                  p, a {
+                      font-size: 14px !important;
+                  }
+
+                  span[style*="font-size: 28px;"] {
+                      font-size: 20px !important;
+                      padding: 10px 20px !important;
+                  }
+
+                  a[style*="padding: 14px 40px;"] {
+                      padding: 10px 20px !important;
+                  }
+              }
+      </style>
         `,
-    };
+      };
 
-    const doctorMailOptions = {
-      from: "bimar.med24@gmail.com",
-      to: doctor.doctorEmail,
-      subject: "New Appointment Scheduled",
-      html: `
-       <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
-
-            <!-- Header Section -->
-            <div style="background-color: #16423C; padding: 30px; text-align: center;">
-                <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">🩺 New Appointment</h1>
-            </div>
-
-            <!-- Content Section -->
-            <div style="padding: 30px;">
-                <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Dr. ${
-                  doctor.doctorName
-                }</h2>
-                <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                    A new appointment has been scheduled at your clinic.
-                </p>
-                <div style="margin: 25px 0;">
-                    <div style="background-color: #F0F4F9; padding: 20px; border-radius: 8px;">
-                        <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString()}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Booking Number:</strong> ${appointment.bookingNumber}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>👤 Patient Name:</strong> ${patient.userName}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>📞 Patient Phone:</strong> ${patient.userPhone}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>✉️ Patient Email:</strong> ${patient.userEmail}</p>
-                    </div>
-                    <!-- Receipt Section -->
-                    <div style="margin-top: 20px; background-color: #E8F4FE; padding: 20px; border-radius: 8px;">
-                        <h3 style="color: #0A558C; margin: 0 0 10px 0;">Payment Details</h3>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>Receipt Number:</strong> ${receiptNumber}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>Payment Method:</strong> ${paymentMethod}</p>
-                        <p style="margin: 5px 0; color: #16423C;"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
-                    </div>
-                </div>
-                <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                    Please review the patient's medical history in your dashboard and prepare any necessary documents.
-                </p>
-            </div>
-
-            <!-- Footer Section -->
-            <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
-                <p style="margin: 0;">
-                    Need assistance? Contact us at
-                    <a href="mailto:bimar.med24@gmail.com" style="color: #16423C; text-decoration: underline;">bimar.med24@gmail.com</a>
-                </p>
-                <p style="margin-top: 8px;">&copy; 2024 <span style="color: #16423C; font-weight: bold;">Bimar</span>. All Rights Reserved.</p>
-            </div>
-        </div>
-    </div>
-    <!-- Media Query -->
-    <style>
-         @media only screen and (max-width: 600px) {
-                div[style*="padding: 40px;"] {
-                    padding: 20px !important;
-                }
-
-                div[style*="padding: 30px;"] {
-                    padding: 20px !important;
-                }
-
-                h1, h2 {
-                    font-size: 20px !important;
-                }
-
-                p, a {
-                    font-size: 14px !important;
-                }
-
-                span[style*="font-size: 28px;"] {
-                    font-size: 20px !important;
-                    padding: 10px 20px !important;
-                }
-
-                a[style*="padding: 14px 40px;"] {
-                    padding: 10px 20px !important;
-                }
-            }
-    </style>
-      `,
-    };
-    await transporter.sendMail(patientMailOptions);
-    await transporter.sendMail(doctorMailOptions);
+      // Send emails in background
+      transporter.sendMail(patientMailOptions).catch(err => {
+        console.log("Error sending patient email:", err);
+      });
+      transporter.sendMail(doctorMailOptions).catch(err => {
+        console.log("Error sending doctor email:", err);
+      });
+    } catch (emailError) {
+      console.log("Error setting up email transport:", emailError);
+    }
   } catch (error) {
     console.log(error);
     errorHandler(res, error);
@@ -437,19 +464,30 @@ const updateAppointment = async (req, res) => {
         });
       }
 
-      // 3. Get count of appointments on new date to determine new booking number
+      // 3. Get all active appointments on new date to find the first available slot
       const newDateStart = new Date(appointmentData.appointmentDate);
       newDateStart.setHours(0, 0, 0, 0);
       const newDateEnd = new Date(appointmentData.appointmentDate);
       newDateEnd.setHours(23, 59, 59, 999);
 
-      const newDateAppointmentsCount = await Appointments.countDocuments({
+      const newDateAppointments = await Appointments.find({
         clinicId: oldAppointment.clinicId,
         appointmentDate: {
           $gte: newDateStart,
           $lte: newDateEnd
+        },
+        status: { $ne: "Cancelled" }  // Only count active appointments
+      }).sort({ bookingNumber: 1 }); // Sort by booking number
+
+      // Find the first available booking number
+      let availableBookingNumber = 1;
+      for (const apt of newDateAppointments) {
+        if (apt.bookingNumber === availableBookingNumber) {
+          availableBookingNumber++;
+        } else {
+          break; // Found a gap, use this number
         }
-      });
+      }
 
       // 4. Check if the new date has available slots
       const doctor = await Doctor.findById(oldAppointment.doctorId);
@@ -462,12 +500,12 @@ const updateAppointment = async (req, res) => {
         throw "Clinic is not open on the selected day";
       }
 
-      if (newDateAppointmentsCount >= newDateWorkDay.NoBookings) {
+      if (availableBookingNumber > newDateWorkDay.NoBookings) {
         throw "No more booking slots available for the selected date";
       }
 
       // 5. Assign new booking number
-      appointmentData.bookingNumber = newDateAppointmentsCount + 1;
+      appointmentData.bookingNumber = availableBookingNumber;
       
       // 6. Extract and assign new appointment start time from new date's working hours
       const newWorkingHoursString = newDateWorkDay.workingHours[0];
@@ -497,6 +535,11 @@ const updateAppointment = async (req, res) => {
           user: process.env.USER,
           pass: process.env.PASS,
         },
+        // Fix SSL certificate issue
+        secure: false,
+        tls: {
+          rejectUnauthorized: false
+        }
       });
 
       // Get working hours for the new date
@@ -548,7 +591,10 @@ const updateAppointment = async (req, res) => {
             </div>
           `
         };
-        await transporter.sendMail(patientMailOptions);
+        // Send email in background
+        transporter.sendMail(patientMailOptions).catch(err => {
+          console.log("Error sending patient update email:", err);
+        });
       }
 
       if (emailData.doctorEmail) {
@@ -592,10 +638,13 @@ const updateAppointment = async (req, res) => {
             </div>
           `
         };
-        await transporter.sendMail(doctorMailOptions);
+        // Send email in background
+        transporter.sendMail(doctorMailOptions).catch(err => {
+          console.log("Error sending doctor update email:", err);
+        });
       }
     } catch (emailError) {
-      console.log("Error sending update notification emails:", emailError);
+      console.log("Error setting up email transport for update:", emailError);
     }
   } catch (err) {
     console.log(err);
@@ -683,53 +732,53 @@ const cancelAppointment = async (req, res) => {
       bookingNumber: appointment.bookingNumber
     };
 
-      // Try to send emails
-      try {
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          port: parseInt(process.env.EMAIL_PORT) || 587,
-          auth: {
-            user: process.env.USER,
-            pass: process.env.PASS,
-          },
+    // Try to send emails
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        auth: {
+          user: process.env.USER,
+          pass: process.env.PASS,
+        },
+        // Fix SSL certificate issue
+        secure: false,
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+  
+      // Only send patient email if we have a valid patient email
+      if (emailData.patientEmail) {
+        const patientMailOptions = {
+          from: "bimar.med24@gmail.com",
+          to: emailData.patientEmail,
+          subject: "Appointment Cancellation",
+          html: ``,
+        };
+        // Send email in background
+        transporter.sendMail(patientMailOptions).catch(err => {
+          console.log("Error sending patient cancellation email:", err);
         });
-  
-        // Array to store email sending promises
-        const emailPromises = [];
-  
-        // Only send patient email if we have a valid patient email
-        if (emailData.patientEmail) {
-          const patientMailOptions = {
-            from: "bimar.med24@gmail.com",
-            to: emailData.patientEmail,
-            subject: "Appointment Cancellation",
-            html: ``,
-          };
-          emailPromises.push(transporter.sendMail(patientMailOptions));
-        }
-  
-        // Only send doctor email if we have a valid doctor email
-        if (emailData.doctorEmail) {
-          const doctorMailOptions = {
-            from: "bimar.med24@gmail.com",
-            to: emailData.doctorEmail,
-            subject: "Appointment Cancellation Notice",
-            html: ``,
-          };
-          emailPromises.push(transporter.sendMail(doctorMailOptions));
-        }
-  
-        // Send all valid emails
-        if (emailPromises.length > 0) {
-          await Promise.all(emailPromises);
-          console.log("Cancellation notification emails sent successfully");
-        } else {
-          console.log("No valid email recipients found");
-        }
-      } catch (emailError) {
-        // Log email sending error but don't affect the main operation
-        console.log("Error sending cancellation emails:", emailError);
       }
+  
+      // Only send doctor email if we have a valid doctor email
+      if (emailData.doctorEmail) {
+        const doctorMailOptions = {
+          from: "bimar.med24@gmail.com",
+          to: emailData.doctorEmail,
+          subject: "Appointment Cancellation Notice",
+          html: ``,
+        };
+        // Send email in background
+        transporter.sendMail(doctorMailOptions).catch(err => {
+          console.log("Error sending doctor cancellation email:", err);
+        });
+      }
+    } catch (emailError) {
+      // Log email sending error but don't affect the main operation
+      console.log("Error setting up email transport for cancellation:", emailError);
+    }
   } catch (err) {
     console.log(err);
     errorHandler(res, err);
@@ -792,14 +841,25 @@ const createFollowUpAppointment = async (req, res) => {
     const clinic = doctor.clinic.find((c) => c._id.toString() === clinicId);
     if (!clinic) throw "Invalid clinic ID for this doctor";
 
-    // Get existing appointments count for this date
-    const existingAppointmentsCount = await Appointments.countDocuments({
+    // Get all active appointments for this date to find the first available slot
+    const existingAppointments = await Appointments.find({
       clinicId,
       appointmentDate: {
         $gte: startOfDay,
         $lte: endOfDay
+      },
+      status: { $ne: "Cancelled" }  // Only count active appointments
+    }).sort({ bookingNumber: 1 }); // Sort by booking number
+
+    // Find the first available booking number
+    let availableBookingNumber = 1;
+    for (const apt of existingAppointments) {
+      if (apt.bookingNumber === availableBookingNumber) {
+        availableBookingNumber++;
+      } else {
+        break; // Found a gap, use this number
       }
-    });
+    }
 
     // Check clinic availability
     const workDay = clinic.clinicWorkDays.find(day => 
@@ -810,7 +870,7 @@ const createFollowUpAppointment = async (req, res) => {
       throw "Clinic is not open on this day";
     }
 
-    if (existingAppointmentsCount >= workDay.NoBookings) {
+    if (availableBookingNumber > workDay.NoBookings) {
       throw "No more booking slots available for this day";
     }
 
@@ -820,7 +880,7 @@ const createFollowUpAppointment = async (req, res) => {
       doctorId: doctor._id,
       clinicId,
       appointmentDate,
-      bookingNumber: existingAppointmentsCount + 1,
+      bookingNumber: availableBookingNumber,
       Price: clinic.Price, //!!follow up price might be changed 
       bookingType: "follow-up"
     });
@@ -833,35 +893,47 @@ const createFollowUpAppointment = async (req, res) => {
     });
 
     // Send notification emails
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      port: parseInt(process.env.EMAIL_PORT) || 587,
-      auth: {
-        user: process.env.USER,
-        pass: process.env.PASS,
-      },
-    });
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        auth: {
+          user: process.env.USER,
+          pass: process.env.PASS,
+        },
+        // Fix SSL certificate issue
+        secure: false,
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
 
-    // Patient email notification
-    const patientMailOptions = {
-      from: "bimar.med24@gmail.com",
-      to: patient.userEmail,
-      subject: "Follow-up Appointment Scheduled",
-      html: ``
-    };
+      // Patient email notification
+      const patientMailOptions = {
+        from: "bimar.med24@gmail.com",
+        to: patient.userEmail,
+        subject: "Follow-up Appointment Scheduled",
+        html: ``
+      };
 
-    // Doctor confirmation email
-    const doctorMailOptions = {
-      from: "bimar.med24@gmail.com",
-      to: doctor.doctorEmail,
-      subject: "Follow-up Appointment Confirmation",
-      html: ``
-    };
+      // Doctor confirmation email
+      const doctorMailOptions = {
+        from: "bimar.med24@gmail.com",
+        to: doctor.doctorEmail,
+        subject: "Follow-up Appointment Confirmation",
+        html: ``
+      };
 
-    await Promise.all([
-      transporter.sendMail(patientMailOptions),
-      transporter.sendMail(doctorMailOptions)
-    ]);
+      // Send emails in background
+      transporter.sendMail(patientMailOptions).catch(err => {
+        console.log("Error sending patient follow-up email:", err);
+      });
+      transporter.sendMail(doctorMailOptions).catch(err => {
+        console.log("Error sending doctor follow-up email:", err);
+      });
+    } catch (emailError) {
+      console.log("Error setting up email transport for follow-up:", emailError);
+    }
 
   } catch (error) {
     console.log(error);
