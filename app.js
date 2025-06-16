@@ -24,6 +24,7 @@ import ratingRoutes from './Routes/ratingRoutes.js'
 import appRatingRoutes from './Routes/appRatingRoutes.js';
 import medicationTrack from "./Routes/medicationTrackRoute.js";
 import adminRoute from "./Routes/AdminAuthRoute.js"
+import ToDoRoute from "./Routes/ToDoRoute.js";
 
 import {scheduleReminders} from "./controllers/automaticMedicineAlert.js"
 
@@ -52,7 +53,7 @@ const __dirname = path.dirname(__filename);
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Add your frontend origins
+    origin: "http://localhost:5173", 
     credentials: true,
   })
 );
@@ -79,6 +80,7 @@ app.use('/rate',ratingRoutes);
 app.use('/rateApp', appRatingRoutes);
 app.use('/medication',medicationTrack);
 app.use('/admin',adminRoute);
+app.use("/todo", ToDoRoute);
 
 const onlineUsers = {};
 
