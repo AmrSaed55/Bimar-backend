@@ -28,6 +28,7 @@ const PatientSchema = mongoose.Schema({
     date: { type: Date, default: Date.now },
     doctorName: String,
     doctorPhone: String,
+    doctorImage: String,
     diagnosis: [String],
     treatmentPlan: String,
     Xray: [String],
