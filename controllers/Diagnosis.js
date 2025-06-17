@@ -94,6 +94,7 @@ const createPrescription = async (req, res) => {
   date: new Date(),
   doctorName: prescriptionData.doctorName || null,
   doctorPhone: prescriptionData.doctorPhone || null,
+  doctorImage: prescriptionData.doctorImage || null,
   diagnosis: prescriptionData.diagnosis || [],
   treatmentPlan: prescriptionData.treatmentPlan || null,
   Xray: [],
