@@ -384,6 +384,7 @@ if (!token) {
       information: {
         medicalRecord: patient.medicalRecord || "No medical records available",
         personalRecords: patient.personalRecords || "No personal records available",
+        Diagnosis : patient.Diagnosis || "No diagnosis available",
         userName : patient.userName,
         profileImage : patient.profileImage,
         patientId : patient._id
