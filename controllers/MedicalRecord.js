@@ -107,6 +107,59 @@ const updateMedicalRecord = async (req, res) => {
   }
 };
 
+// Update medical record by patient ID
+const updateMedicalRecordByPatientId = async (req, res) => {
+  try {
+    const medicalRecordData = req.body;
+    const { patientId } = req.params;
+
+    // Retrieve token for verification
+    const token = req.cookies.jwt;
+    if (!token) {
+      throw "No Token Provided";
+    }
+
+    // Verify token (though we're using patientId from params)
+    jwt.verify(token, process.env.JWT_KEY);
+
+    // Find patient by ID
+    const patient = await PatientModel.findById(patientId).select(
+      "medicalRecord"
+    );
+    if (!patient) {
+      throw "Patient not found";
+    }
+
+    // Update the medical record
+    if (!patient.medicalRecord) patient.medicalRecord = {};
+
+    // If the update includes familyHistory, merge it deeply
+    if (medicalRecordData.familyHistory) {
+      if (!patient.medicalRecord.familyHistory)
+        patient.medicalRecord.familyHistory = {};
+      Object.assign(
+        patient.medicalRecord.familyHistory,
+        medicalRecordData.familyHistory
+      );
+      // Remove familyHistory from the main update to avoid shallow overwrite
+      delete medicalRecordData.familyHistory;
+    }
+
+    // Merge the rest of the medicalRecord fields
+    Object.assign(patient.medicalRecord, medicalRecordData);
+
+    await patient.save();
+
+    res.status(200).json({
+      status: responseMsgs.SUCCESS,
+      data: patient.medicalRecord,
+    });
+  } catch (err) {
+    console.log(err);
+    errorHandler(res, err);
+  }
+};
+
 // Delete medical record
 const deleteMedicalRecord = async (req, res) => {
   try {
@@ -146,4 +199,5 @@ export {
   getMedicalRecords,
   updateMedicalRecord,
   deleteMedicalRecord,
+  updateMedicalRecordByPatientId,
 };

@@ -4,6 +4,7 @@ import {
   getMedicalRecords,
   updateMedicalRecord,
   deleteMedicalRecord,
+  updateMedicalRecordByPatientId,
 } from "../controllers/MedicalRecord.js";
 import medicalRecordValidation from "../validation/patientAuthValid.js";
 
@@ -15,6 +16,7 @@ router.post(
   createMedicalRecord
 );
 router.put("/update", updateMedicalRecord);
+router.put("/update/:patientId", updateMedicalRecordByPatientId);
 router.delete("/delete", deleteMedicalRecord);
 router.get("/", getMedicalRecords);
 
