@@ -17,7 +17,7 @@ const submitRating = async (req, res) => {
 
     const { doctorId, rating, comment } = req.body;
 
-    if (rating < 1 || rating > 5) throw "rating must be between 1 adn 5";
+    if (rating < 1 || rating > 5) throw "rating must be between 1 and 5";
 
     const hasCompletedAppointment = await Appointment.findOne({
       doctorId,
