@@ -302,11 +302,16 @@ const generateAccessLink = async (req, res) => {
 <style>
   @media only screen and (max-width: 600px) {
          div[style*="padding: 40px;"] {
-             padding: 20px !important;
+             padding: 10px !important;
          }
 
          div[style*="padding: 30px;"] {
-             padding: 20px !important;
+             padding: 15px !important;
+         }
+
+         div[style*="max-width: 600px;"] {
+             max-width: 95% !important;
+             margin: 0 auto !important;
          }
 
          h1, h2 {

@@ -204,11 +204,16 @@ const createAppointemnt = async (req, res) => {
           <style>
               @media only screen and (max-width: 600px) {
                   div[style*="padding: 40px;"] {
-                      padding: 20px !important;
+                      padding: 10px !important;
                   }
 
                   div[style*="padding: 30px;"] {
-                      padding: 20px !important;
+                      padding: 15px !important;
+                  }
+
+                  div[style*="max-width: 600px;"] {
+                      max-width: 95% !important;
+                      margin: 0 auto !important;
                   }
 
                   h1, h2 {
@@ -288,11 +293,16 @@ const createAppointemnt = async (req, res) => {
       <style>
            @media only screen and (max-width: 600px) {
                   div[style*="padding: 40px;"] {
-                      padding: 20px !important;
+                      padding: 10px !important;
                   }
 
                   div[style*="padding: 30px;"] {
-                      padding: 20px !important;
+                      padding: 15px !important;
+                  }
+
+                  div[style*="max-width: 600px;"] {
+                      max-width: 95% !important;
+                      margin: 0 auto !important;
                   }
 
                   h1, h2 {
@@ -754,7 +764,84 @@ const cancelAppointment = async (req, res) => {
           from: "bimar.med24@gmail.com",
           to: emailData.patientEmail,
           subject: "Appointment Cancellation",
-          html: ``,
+          html: `
+            <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
+                    <!-- Header Section -->
+                    <div style="background-color: #16423C; padding: 30px; text-align: center;">
+                        <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">❌ Appointment Cancelled</h1>
+                    </div>
+
+                    <!-- Content Section -->
+                    <div style="padding: 30px;">
+                        <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, ${emailData.patientName} 👋</h2>
+                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                            Your appointment with <strong>Dr. ${emailData.doctorName}</strong> has been cancelled.
+                        </p>
+                        <div style="margin: 25px 0;">
+                            <div style="background-color: #F8F9FA; padding: 20px; border-radius: 8px; border-left: 4px solid #DC3545;">
+                                <h3 style="color: #DC3545; margin: 0 0 15px 0;">Cancelled Appointment Details</h3>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(emailData.appointmentDate).toLocaleDateString()}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Booking Number:</strong> ${emailData.bookingNumber}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>👨‍⚕️ Doctor:</strong> Dr. ${emailData.doctorName}</p>
+                            </div>
+                        </div>
+                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                            If you need to reschedule your appointment, please book a new appointment through the Application.
+                        </p>
+                        <div style="background-color: #FFF3CD; padding: 15px; border-radius: 8px; border: 1px solid #FFEAA7; margin-top: 20px;">
+                            <p style="color: #856404; margin: 0; font-size: 14px;">
+                                💡 <strong>Tip:</strong> For future appointments, please notify us at least 24 hours in advance if you need to cancel or reschedule.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Footer Section -->
+                    <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
+                        <p style="margin: 0;">
+                            Need to reschedule? Contact us at
+                            <a href="mailto:bimar.med24@gmail.com" style="color: #16423C; text-decoration: underline;">bimar.med24@gmail.com</a>
+                        </p>
+                        <p style="margin-top: 8px;">&copy; 2024 <span style="color: #16423C; font-weight: bold;">Bimar</span>. All Rights Reserved.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Query -->
+            <style>
+                @media only screen and (max-width: 600px) {
+                    div[style*="padding: 40px;"] {
+                        padding: 10px !important;
+                    }
+
+                    div[style*="padding: 30px;"] {
+                        padding: 15px !important;
+                    }
+
+                    div[style*="max-width: 600px;"] {
+                        max-width: 95% !important;
+                        margin: 0 auto !important;
+                    }
+
+                    h1, h2 {
+                        font-size: 20px !important;
+                    }
+
+                    p, a {
+                        font-size: 14px !important;
+                    }
+
+                    span[style*="font-size: 28px;"] {
+                        font-size: 20px !important;
+                        padding: 10px 20px !important;
+                    }
+
+                    a[style*="padding: 14px 40px;"] {
+                        padding: 10px 20px !important;
+                    }
+                }
+            </style>
+          `,
         };
         // Send email in background
         transporter.sendMail(patientMailOptions).catch(err => {
@@ -768,7 +855,85 @@ const cancelAppointment = async (req, res) => {
           from: "bimar.med24@gmail.com",
           to: emailData.doctorEmail,
           subject: "Appointment Cancellation Notice",
-          html: ``,
+          html: `
+            <div style="font-family: Arial, sans-serif; background-color: #F0F4F9; padding: 40px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); overflow: hidden; width: 100%;">
+                    <!-- Header Section -->
+                    <div style="background-color: #16423C; padding: 30px; text-align: center;">
+                        <h1 style="color: #FFFFFF; font-size: 28px; margin: 0; font-weight: bold;">⚠️ Appointment Cancelled</h1>
+                    </div>
+
+                    <!-- Content Section -->
+                    <div style="padding: 30px;">
+                        <h2 style="color: #333; font-size: 22px; margin-bottom: 15px;">Hello, Dr. ${emailData.doctorName}</h2>
+                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                            An appointment has been cancelled at your clinic.
+                        </p>
+                        <div style="margin: 25px 0;">
+                            <div style="background-color: #F8F9FA; padding: 20px; border-radius: 8px; border-left: 4px solid #FFC107;">
+                                <h3 style="color: #856404; margin: 0 0 15px 0;">Cancelled Appointment Details</h3>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>👤 Patient:</strong> ${emailData.patientName}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>📅 Date:</strong> ${new Date(emailData.appointmentDate).toLocaleDateString()}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>🔢 Booking Number:</strong> ${emailData.bookingNumber}</p>
+                                <p style="margin: 5px 0; color: #16423C;"><strong>📧 Patient Email:</strong> ${emailData.patientEmail}</p>
+                            </div>
+                        </div>
+                        <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                            The appointment slot has been freed up and is now available for other patients. You may want to check your dashboard for any pending appointment requests.
+                        </p>
+                        <div style="background-color: #E8F4FE; padding: 15px; border-radius: 8px; border: 1px solid #B3D9FF; margin-top: 20px;">
+                            <p style="color: #0A558C; margin: 0; font-size: 14px;">
+                                📊 <strong>Note:</strong> This cancellation has been automatically reflected in your appointment schedule.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Footer Section -->
+                    <div style="background-color: #E1DEDE; text-align: center; padding: 20px; font-size: 14px; color: #777;">
+                        <p style="margin: 0;">
+                            Need assistance? Contact us at
+                            <a href="mailto:bimar.med24@gmail.com" style="color: #16423C; text-decoration: underline;">bimar.med24@gmail.com</a>
+                        </p>
+                        <p style="margin-top: 8px;">&copy; 2024 <span style="color: #16423C; font-weight: bold;">Bimar</span>. All Rights Reserved.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Query -->
+            <style>
+                @media only screen and (max-width: 600px) {
+                    div[style*="padding: 40px;"] {
+                        padding: 10px !important;
+                    }
+
+                    div[style*="padding: 30px;"] {
+                        padding: 15px !important;
+                    }
+
+                    div[style*="max-width: 600px;"] {
+                        max-width: 95% !important;
+                        margin: 0 auto !important;
+                    }
+
+                    h1, h2 {
+                        font-size: 20px !important;
+                    }
+
+                    p, a {
+                        font-size: 14px !important;
+                    }
+
+                    span[style*="font-size: 28px;"] {
+                        font-size: 20px !important;
+                        padding: 10px 20px !important;
+                    }
+
+                    a[style*="padding: 14px 40px;"] {
+                        padding: 10px 20px !important;
+                    }
+                }
+            </style>
+          `,
         };
         // Send email in background
         transporter.sendMail(doctorMailOptions).catch(err => {
